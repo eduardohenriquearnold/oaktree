@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 #include <memory>
 #include <random>
 
@@ -97,25 +98,43 @@ OctreeNode *create_octree(std::vector<double3> points, unsigned int max_points_p
     return root;
 }
 
-size_t walk_octree(OctreeNode *current, unsigned int level = 0, size_t count = 0)
+void octree_stats(OctreeNode *root)
 {
-    for (OctreeNode *child : current->children)
+    int num_points = 0;
+    int num_nodes = 0;
+    int max_level = 0;
+    std::queue<OctreeNode *> q;
+    std::queue<unsigned int> level;
+    q.push(root);
+    level.push(0);
+
+    OctreeNode *current;
+    unsigned int current_level;
+    while (!q.empty())
     {
-        count = walk_octree(child, level + 1, count);
+        current = q.front();
+        q.pop();
+        current_level = level.front();
+        level.pop();
+
+        num_nodes++;
+        num_points += current->index.size();
+        if (current_level > max_level)
+            max_level = current_level;
+
+        for (OctreeNode *child : current->children)
+        {
+            q.push(child);
+            level.push(current_level + 1);
+        }
     }
 
-    if (current->index.size() > 0)
-    {
-        // std::cout << "Node level [" << level << "] with " << current->index.size() << " points" << std::endl;
-        return count + current->index.size();
-    }
-    return count;
+    std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points." << std::endl;
 }
 
 int main()
 {
-    std::vector<double3> pcl = random_pointcloud(10000, 2.);
-    OctreeNode *root = create_octree(pcl, 50);
-    size_t num_points = walk_octree(root);
-    std::cout << "Total number of points: " << num_points << std::endl;
+    std::vector<double3> pcl = random_pointcloud(100000, 2.);
+    OctreeNode *root = create_octree(pcl, 100);
+    octree_stats(root);
 }
