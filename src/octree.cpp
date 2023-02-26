@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <algorithm>
 #include <memory>
 #include <random>
 
@@ -86,10 +87,23 @@ void split_node(OctreeNode *node, unsigned int max_points_per_node, std::vector<
             split_node(*it, max_points_per_node, points);
 }
 
+double3 reduce(std::vector<double3> points, const double &(*reduce_fn)(const double &, const double &))
+{
+    double3 reduced = points[0];
+    for (double3 point : points)
+    {
+        reduced[0] = reduce_fn(reduced[0], point[0]);
+        reduced[1] = reduce_fn(reduced[1], point[1]);
+        reduced[2] = reduce_fn(reduced[2], point[2]);
+    }
+    return reduced;
+}
+
 OctreeNode *create_octree(std::vector<double3> points, unsigned int max_points_per_node)
 {
-    // TODO: Get extent of points
-    OctreeNode *root = new OctreeNode(double3(-1., -1., -1.), double3(1., 1., 1.));
+    double3 vert0 = reduce(points, std::min<double>);
+    double3 vert1 = reduce(points, std::max<double>);
+    OctreeNode *root = new OctreeNode(vert0, vert1);
 
     for (size_t i = 0; i < points.size(); i++)
         root->index.push_back(i);
