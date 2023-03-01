@@ -68,11 +68,11 @@ void split_node(OctreeNode *node, unsigned int max_points_per_node, std::vector<
 
     // Distribute points into children
     double3 node_center = 0.5 * (node->vert0 + node->vert1);
-    for (unsigned int i = 0; i < node->index.size(); i++)
+    for (size_t point_index : node->index)
     {
-        double3 point = points[node->index[i]] - node_center;
+        double3 point = points[point_index] - node_center;
         int children_id = (point.x > 0 ? 1 : 0) + (point.y > 0 ? 1 : 0) * 2 + (point.z > 0 ? 1 : 0) * 4;
-        node->children[children_id]->index.push_back(i);
+        node->children[children_id]->index.push_back(point_index);
     }
     node->index.clear();
 
@@ -146,9 +146,38 @@ void octree_stats(OctreeNode *root)
     std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points." << std::endl;
 }
 
+void octree_test(OctreeNode *root, std::vector<double3> points)
+{
+    // Test that all leaf nodes have points within their bounds
+    std::queue<OctreeNode *> q;
+    q.push(root);
+
+    OctreeNode *current;
+    while (!q.empty())
+    {
+        current = q.front();
+        q.pop();
+
+        for (OctreeNode *child : current->children)
+            q.push(child);
+
+        for (size_t idx : current->index)
+        {
+            double3 pt = points[idx];
+            if ((pt[0] < current->vert0[0]) | (pt[0] > current->vert1[0]) | (pt[1] < current->vert0[1]) | (pt[1] > current->vert1[1]) | (pt[2] < current->vert0[2]) | (pt[2] > current->vert1[2]))
+            {
+                std::cout << "Found error for point index " << idx << std::endl;
+                return;
+            }
+        }
+    }
+    std::cout << "Octree test passed." << std::endl;
+}
+
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
     OctreeNode *root = create_octree(pcl, 100);
     octree_stats(root);
+    octree_test(root, pcl);
 }
