@@ -24,6 +24,9 @@ public:
 
     OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
     ~OctreeNode();
+
+    void stats();
+    void test(std::vector<double3> points);
 };
 
 OctreeNode::~OctreeNode()
@@ -112,14 +115,14 @@ OctreeNode *create_octree(std::vector<double3> points, unsigned int max_points_p
     return root;
 }
 
-void octree_stats(OctreeNode *root)
+void OctreeNode::stats()
 {
     int num_points = 0;
     int num_nodes = 0;
     int max_level = 0;
     std::queue<OctreeNode *> q;
     std::queue<unsigned int> level;
-    q.push(root);
+    q.push(this);
     level.push(0);
 
     OctreeNode *current;
@@ -146,11 +149,11 @@ void octree_stats(OctreeNode *root)
     std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points." << std::endl;
 }
 
-void octree_test(OctreeNode *root, std::vector<double3> points)
+void OctreeNode::test(std::vector<double3> points)
 {
     // Test that all leaf nodes have points within their bounds
     std::queue<OctreeNode *> q;
-    q.push(root);
+    q.push(this);
 
     OctreeNode *current;
     while (!q.empty())
@@ -178,6 +181,6 @@ int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
     OctreeNode *root = create_octree(pcl, 100);
-    octree_stats(root);
-    octree_test(root, pcl);
+    root->stats();
+    root->test(pcl);
 }
