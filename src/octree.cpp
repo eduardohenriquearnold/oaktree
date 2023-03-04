@@ -19,23 +19,14 @@ public:
     // Point indices (for leaf nodes)
     std::vector<size_t> index;
 
-    // Pointers to children
-    std::vector<OctreeNode *> children;
+    std::vector<OctreeNode> children;
 
     OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
-    ~OctreeNode();
+    OctreeNode(std::vector<double3> points, unsigned int max_points_per_node);
 
+    void split(std::vector<double3> points, unsigned int max_points_per_node);
     void stats();
     void test(std::vector<double3> points);
-};
-
-OctreeNode::~OctreeNode()
-{
-    for (OctreeNode *child : children)
-    {
-        delete child;
-        free(child);
-    }
 };
 
 std::vector<double3> random_pointcloud(unsigned int num_points, double length)
@@ -52,48 +43,10 @@ std::vector<double3> random_pointcloud(unsigned int num_points, double length)
     return points;
 }
 
-void split_node(OctreeNode *node, unsigned int max_points_per_node, std::vector<double3> points)
-{
-    if (node->index.size() <= max_points_per_node)
-        return;
-
-    // Create all 8 children
-    double3 half_size = 0.5 * (node->vert1 - node->vert0);
-    for (int i = 0; i < 8; i++)
-    {
-        int x = i % 2;
-        int y = (i / 2) % 2;
-        int z = (i / 4) % 2;
-        double3 vert0 = double3(x, y, z) * half_size + node->vert0;
-        double3 vert1 = node->vert1 - double3(1 - x, 1 - y, 1 - z) * half_size;
-        node->children.push_back(new OctreeNode(vert0, vert1));
-    }
-
-    // Distribute points into children
-    double3 node_center = 0.5 * (node->vert0 + node->vert1);
-    for (size_t point_index : node->index)
-    {
-        double3 point = points[point_index] - node_center;
-        int children_id = (point.x > 0 ? 1 : 0) + (point.y > 0 ? 1 : 0) * 2 + (point.z > 0 ? 1 : 0) * 4;
-        node->children[children_id]->index.push_back(point_index);
-    }
-    node->index.clear();
-
-    // Recursively prune child without points and split child with points
-    for (auto it = node->children.begin(); it != node->children.end(); it++)
-        if ((*it)->index.size() == 0)
-        {
-            delete (*it);
-            node->children.erase(it--);
-        }
-        else
-            split_node(*it, max_points_per_node, points);
-}
-
 double3 reduce(std::vector<double3> points, const double &(*reduce_fn)(const double &, const double &))
 {
     double3 reduced = points[0];
-    for (double3 point : points)
+    for (double3 &point : points)
     {
         reduced[0] = reduce_fn(reduced[0], point[0]);
         reduced[1] = reduce_fn(reduced[1], point[1]);
@@ -102,17 +55,50 @@ double3 reduce(std::vector<double3> points, const double &(*reduce_fn)(const dou
     return reduced;
 }
 
-OctreeNode *create_octree(std::vector<double3> points, unsigned int max_points_per_node)
+void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_node)
 {
-    double3 vert0 = reduce(points, std::min<double>);
-    double3 vert1 = reduce(points, std::max<double>);
-    OctreeNode *root = new OctreeNode(vert0, vert1);
+    if (index.size() <= max_points_per_node)
+        return;
+
+    // Create all 8 children
+    double3 half_size = 0.5 * (vert1 - vert0);
+    for (int i = 0; i < 8; i++)
+    {
+        int x = i % 2;
+        int y = (i / 2) % 2;
+        int z = (i / 4) % 2;
+        double3 v0 = double3(x, y, z) * half_size + vert0;
+        double3 v1 = vert1 - double3(1 - x, 1 - y, 1 - z) * half_size;
+        children.push_back(OctreeNode(v0, v1));
+    }
+
+    // Distribute points into children
+    double3 node_center = 0.5 * (vert0 + vert1);
+    for (size_t point_index : index)
+    {
+        double3 point = points[point_index] - node_center;
+        int children_id = (point.x > 0 ? 1 : 0) + (point.y > 0 ? 1 : 0) * 2 + (point.z > 0 ? 1 : 0) * 4;
+        children[children_id].index.push_back(point_index);
+    }
+    index.clear();
+
+    // Recursively prune child without points and split child with points
+    for (auto it = children.begin(); it != children.end(); it++)
+        if (it->index.size() == 0)
+            children.erase(it--);
+        else
+            it->split(points, max_points_per_node);
+}
+
+OctreeNode::OctreeNode(std::vector<double3> points, unsigned int max_points_per_node)
+{
+    vert0 = reduce(points, std::min<double>);
+    vert1 = reduce(points, std::max<double>);
 
     for (size_t i = 0; i < points.size(); i++)
-        root->index.push_back(i);
+        index.push_back(i);
 
-    split_node(root, max_points_per_node, points);
-    return root;
+    split(points, max_points_per_node);
 }
 
 void OctreeNode::stats()
@@ -139,9 +125,9 @@ void OctreeNode::stats()
         if (current_level > max_level)
             max_level = current_level;
 
-        for (OctreeNode *child : current->children)
+        for (OctreeNode &child : current->children)
         {
-            q.push(child);
+            q.push(&child);
             level.push(current_level + 1);
         }
     }
@@ -161,8 +147,8 @@ void OctreeNode::test(std::vector<double3> points)
         current = q.front();
         q.pop();
 
-        for (OctreeNode *child : current->children)
-            q.push(child);
+        for (OctreeNode &child : current->children)
+            q.push(&child);
 
         for (size_t idx : current->index)
         {
@@ -180,7 +166,7 @@ void OctreeNode::test(std::vector<double3> points)
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
-    OctreeNode *root = create_octree(pcl, 100);
-    root->stats();
-    root->test(pcl);
+    OctreeNode root(pcl, 100);
+    root.stats();
+    root.test(pcl);
 }
