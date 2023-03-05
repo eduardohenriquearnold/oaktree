@@ -25,6 +25,8 @@ public:
     OctreeNode(std::vector<double3> points, unsigned int max_points_per_node);
 
     void split(std::vector<double3> points, unsigned int max_points_per_node);
+    double ray_intersection(const double3 &origin, const double3 &dir) const;
+
     void stats();
     void test(std::vector<double3> points);
 };
@@ -101,6 +103,7 @@ OctreeNode::OctreeNode(std::vector<double3> points, unsigned int max_points_per_
     split(points, max_points_per_node);
 }
 
+// Show stats of the Octree
 void OctreeNode::stats()
 {
     int num_points = 0;
@@ -135,9 +138,9 @@ void OctreeNode::stats()
     std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points." << std::endl;
 }
 
+// Test that all leaf nodes have points within their bounds
 void OctreeNode::test(std::vector<double3> points)
 {
-    // Test that all leaf nodes have points within their bounds
     std::queue<OctreeNode *> q;
     q.push(this);
 
@@ -153,7 +156,7 @@ void OctreeNode::test(std::vector<double3> points)
         for (size_t idx : current->index)
         {
             double3 pt = points[idx];
-            if ((pt[0] < current->vert0[0]) | (pt[0] > current->vert1[0]) | (pt[1] < current->vert0[1]) | (pt[1] > current->vert1[1]) | (pt[2] < current->vert0[2]) | (pt[2] > current->vert1[2]))
+            if ((pt[0] < current->vert0[0]) || (pt[0] > current->vert1[0]) || (pt[1] < current->vert0[1]) || (pt[1] > current->vert1[1]) || (pt[2] < current->vert0[2]) || (pt[2] > current->vert1[2]))
             {
                 std::cout << "Found error for point index " << idx << std::endl;
                 return;
@@ -163,10 +166,33 @@ void OctreeNode::test(std::vector<double3> points)
     std::cout << "Octree test passed." << std::endl;
 }
 
+// Return shortest ray distance that intersects node, return -1 if no intersection
+double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) const
+{
+    double3 tvert0 = (vert0 - origin) / dir;
+    double3 tvert1 = (vert1 - origin) / dir;
+
+    double3 tmin = min(tvert0, tvert1);
+    double3 tmax = max(tvert0, tvert1);
+
+    double tmin_all = maxelem(tmin);
+    double tmax_all = minelem(tmax);
+
+    if ((tmin_all > tmax.y) || (tmin.y > tmax_all) || (tmin_all > tmax.z) || (tmin.z > tmax_all))
+        return -1;
+
+    return tmin_all;
+}
+
 int main()
 {
-    std::vector<double3> pcl = random_pointcloud(100000, 2.);
-    OctreeNode root(pcl, 100);
-    root.stats();
-    root.test(pcl);
+    // std::vector<double3> pcl = random_pointcloud(100000, 2.);
+    // OctreeNode root(pcl, 100);
+    // root.stats();
+    // root.test(pcl);
+
+    OctreeNode node(double3(0, 0, 0), double3(1, 1, 1));
+    double3 center(0.5, 0.5, 0.5);
+    double3 dir(0, 1, 10);
+    double t = node.ray_intersection(center, dir);
 }
