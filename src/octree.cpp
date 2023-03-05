@@ -26,6 +26,7 @@ public:
 
     void split(std::vector<double3> points, unsigned int max_points_per_node);
     double ray_intersection(const double3 &origin, const double3 &dir) const;
+    std::pair<double, size_t> ray_cast(const double3 &origin, const double3 &dir, const std::vector<double3> &points) const;
 
     void stats();
     void test(std::vector<double3> points);
@@ -169,6 +170,7 @@ void OctreeNode::test(std::vector<double3> points)
 // Return shortest ray distance that intersects node, return -1 if no intersection
 double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) const
 {
+    // Based on https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
     double3 tvert0 = (vert0 - origin) / dir;
     double3 tvert1 = (vert1 - origin) / dir;
 
@@ -182,6 +184,54 @@ double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) c
         return -1;
 
     return tmin_all;
+}
+
+// Cast ray at Octree, finds closest point (along ray direction) that projects to pixel
+// Returns pair:
+// - double t: distance to point, along the ray. -1 if no intersection
+// - size_t point_index: index of point in original point cloud
+// Assumes dir (direction) has unit length
+std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const double3 &dir, const std::vector<double3> &points) const
+{
+    // Priority queue contains octree nodes to visit next (ordered ascending from ray intersection distance)
+    using queue_type = std::pair<double, const OctreeNode *>;
+    std::priority_queue<queue_type, std::vector<queue_type>, std::greater<queue_type>> node_queue;
+    node_queue.push(std::make_pair(0, this));
+
+    // Other queue contains list of points inside the cone, ordered by distance along ray
+    using pqueue_type = std::pair<double, size_t>;
+    std::priority_queue<pqueue_type, std::vector<pqueue_type>, std::greater<pqueue_type>> point_queue;
+
+    // TODO: define this based on intrinsics
+    double RADIUS_THRESHOLD = 5;
+
+    for (; !node_queue.empty(); node_queue.pop())
+    {
+        const OctreeNode *current = node_queue.top().second;
+
+        // Check if points fall within cone, return closest one along ray
+        for (const size_t &idx : current->index)
+        {
+            double3 point = points[idx] - origin;
+            double distance_along_ray = dot(point, dir);
+            double radius_point = distance(point, distance_along_ray * dir);
+            if (radius_point < RADIUS_THRESHOLD)
+                point_queue.push(std::make_pair(distance_along_ray, idx));
+        }
+        if (!point_queue.empty())
+            return point_queue.top();
+
+        // Add children which intersect rays to the queue (ordered by who intersects first)
+        for (const OctreeNode &child : current->children)
+            if (double t = child.ray_intersection(origin, dir) > 0)
+                node_queue.push(std::make_pair(t, &child));
+    }
+
+    return std::make_pair(-1, 0);
+}
+
+void render_depth(const OctreeNode &node, const std::vector<double3> points, linalg::mat<double, 3, 3> K, linalg::mat<double, 4, 4> cam2world)
+{
 }
 
 int main()
