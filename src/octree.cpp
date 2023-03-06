@@ -9,6 +9,10 @@
 using namespace linalg::ostream_overloads;
 using double3 = linalg::aliases::double3;
 
+#define cimg_display 0
+// #include <CImg.h>
+// using CImg = cimg_library::CImg<double>;
+
 class OctreeNode
 {
 public:
@@ -26,7 +30,7 @@ public:
 
     void split(std::vector<double3> points, unsigned int max_points_per_node);
     double ray_intersection(const double3 &origin, const double3 &dir) const;
-    std::pair<double, size_t> ray_cast(const double3 &origin, const double3 &dir, const std::vector<double3> &points) const;
+    std::pair<double, size_t> ray_cast(const double3 &origin, const double3 &dir, const double &radius_pixel, const std::vector<double3> &points) const;
 
     void stats();
     void test(std::vector<double3> points);
@@ -191,7 +195,7 @@ double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) c
 // - double t: distance to point, along the ray. -1 if no intersection
 // - size_t point_index: index of point in original point cloud
 // Assumes dir (direction) has unit length
-std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const double3 &dir, const std::vector<double3> &points) const
+std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const double3 &dir, const double &radius_pixel, const std::vector<double3> &points) const
 {
     // Priority queue contains octree nodes to visit next (ordered ascending from ray intersection distance)
     using queue_type = std::pair<double, const OctreeNode *>;
@@ -201,9 +205,6 @@ std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const doub
     // Other queue contains list of points inside the cone, ordered by distance along ray
     using pqueue_type = std::pair<double, size_t>;
     std::priority_queue<pqueue_type, std::vector<pqueue_type>, std::greater<pqueue_type>> point_queue;
-
-    // TODO: define this based on intrinsics
-    double RADIUS_THRESHOLD = 5;
 
     for (; !node_queue.empty(); node_queue.pop())
     {
@@ -215,34 +216,43 @@ std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const doub
             double3 point = points[idx] - origin;
             double distance_along_ray = dot(point, dir);
             double radius_point = distance(point, distance_along_ray * dir);
-            if (radius_point < RADIUS_THRESHOLD)
-                point_queue.push(std::make_pair(distance_along_ray, idx));
+            double radius_cone = radius_pixel * distance_along_ray;
+            if (radius_point <= radius_cone)
+                point_queue.push(std::make_pair(distance_along_ray * dir.z, idx));
         }
         if (!point_queue.empty())
             return point_queue.top();
 
         // Add children which intersect rays to the queue (ordered by who intersects first)
-        for (const OctreeNode &child : current->children)
-            if (double t = child.ray_intersection(origin, dir) > 0)
+        for (const OctreeNode &child : current->children){
+            double t = child.ray_intersection(origin, dir);
+            if (t > 0)
                 node_queue.push(std::make_pair(t, &child));
+        }
     }
 
     return std::make_pair(-1, 0);
 }
 
-void render_depth(const OctreeNode &node, const std::vector<double3> points, linalg::mat<double, 3, 3> K, linalg::mat<double, 4, 4> cam2world)
-{
-}
+// CImg render_depth(const OctreeNode &node, const std::vector<double3> points, linalg::mat<double, 3, 3> K, linalg::mat<double, 4, 4> cam2world, std::pair<int, int> image_hw)
+// {
+//     // double radius_pixel = np.linalg.norm(Kinv @[ 0.5, 0.5, 0 ].T)
+// }
 
+#include <cmath>
 int main()
 {
-    // std::vector<double3> pcl = random_pointcloud(100000, 2.);
-    // OctreeNode root(pcl, 100);
-    // root.stats();
-    // root.test(pcl);
+    std::vector<double3> pcl = random_pointcloud(100000, 2.);
+    OctreeNode root(pcl, 100);
+    root.stats();
+    root.test(pcl);
+    auto res = root.ray_cast(double3(-3, -2.6, -2.1), double3(1, 1, 1)/std::pow(3, 0.5), 0.01, pcl);
+    std::cout << res.first << " " << res.second << std::endl;
 
-    OctreeNode node(double3(0, 0, 0), double3(1, 1, 1));
-    double3 center(0.5, 0.5, 0.5);
-    double3 dir(0, 1, 10);
-    double t = node.ray_intersection(center, dir);
+    // OctreeNode node(double3(0, 0, 0), double3(1, 1, 1));
+    // double3 center(0.5, 0.5, 0.5);
+    // double3 dir(0, 1, 10);
+    // double t = node.ray_intersection(center, dir);
+
+    // CImg depth(720, 540, 3);
 }
