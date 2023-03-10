@@ -208,9 +208,10 @@ std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const doub
     double shortest_ray_distance = 1e10;
     size_t best_idx = -1;
 
-    for (; !node_queue.empty(); node_queue.pop())
+    while(!node_queue.empty())
     {
         const OctreeNode *current = node_queue.top().second;
+        node_queue.pop();
 
         // Check if points fall within cone, return closest one along ray
         for (const size_t &idx : current->index)
@@ -261,7 +262,7 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
             double3 ray_world = mul(rotmat, unproj);
             auto res = node.ray_cast(origin, ray_world, radius_pixel, points);
             depth(i, j) = res.first;
-            std::cout << "Cast pixel " << i << ", " << j << " with depth " << res.first << std::endl;
+            // std::cout << "Cast pixel " << i << ", " << j << " with depth " << res.first << std::endl;
         }
     
     return depth;
@@ -271,18 +272,19 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
-    OctreeNode root(pcl, 100);
+    OctreeNode root(pcl, 50);
     // root.stats();
     // root.test(pcl);
-    // auto res = root.ray_cast(double3(-3, -2.6, -2.1), double3(1, 1, 1)/std::pow(3, 0.5), 0.01, pcl);
-    // std::cout << res.first << " " << res.second << std::endl;
-
     std::cout << "Finished creating octree" << std::endl;
 
-    double4x4 pose = translation_matrix(double3(-2, -1, -0.5));
+    double4x4 pose = translation_matrix(double3(-10, 4, -10));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {50, 50, 1}};
     std::pair<int, int> image_hw = std::make_pair(100, 100);
 
     auto depth = render_depth(root, pcl, K, pose, image_hw);
+    std::cout << "Finished rendering" << std::endl;
 
+    depth.normalize(0, 255);
+    depth.save("depth.bmp");
+    std::cout << "Saved depth map" << std::endl;
 }
