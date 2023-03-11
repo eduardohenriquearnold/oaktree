@@ -11,6 +11,7 @@ using double3 = linalg::aliases::double3;
 using double3x3 = linalg::aliases::double3x3;
 using double4x4 = linalg::aliases::double4x4;
 
+//CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
 #define cimg_display 0
 #include <CImg.h>
 using CImg = cimg_library::CImg<double>;
@@ -277,15 +278,15 @@ int main()
     // root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
-    // double4x4 pose = translation_matrix(double3(-10, 4, -10));
-    double3 center(-10, 4, -10);
-    double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
-    // std::cout << pose<< std::endl;
+    double4x4 pose = translation_matrix(double3(0, 0, -20));
+    // double3 center(-10, 4, -10);
+    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {50, 50, 1}};
     std::pair<int, int> image_hw = std::make_pair(100, 100);
 
     auto depth = render_depth(root, pcl, K, pose, image_hw);
     std::cout << "Finished rendering" << std::endl;
+    std::cout << depth.min() << " " << depth.max() << std::endl;
 
     depth.normalize(0, 255);
     depth.save("depth.bmp");
