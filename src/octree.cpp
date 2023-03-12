@@ -37,6 +37,7 @@ public:
 
     void stats();
     void test(std::vector<double3> points);
+    void update_vertices(std::vector<double3> points);
 };
 
 std::vector<double3> random_pointcloud(unsigned int num_points, double length)
@@ -53,24 +54,34 @@ std::vector<double3> random_pointcloud(unsigned int num_points, double length)
     return points;
 }
 
-double3 reduce(std::vector<double3> points, const double &(*reduce_fn)(const double &, const double &))
+void OctreeNode::update_vertices(std::vector<double3> points)
 {
-    double3 reduced = points[0];
-    for (double3 &point : points)
+    if (index.size() == 0)
+        return;
+
+    double3 min_vert = points[index[0]];
+    double3 max_vert = points[index[0]];
+    for (size_t &point_idx : index)
     {
-        reduced[0] = reduce_fn(reduced[0], point[0]);
-        reduced[1] = reduce_fn(reduced[1], point[1]);
-        reduced[2] = reduce_fn(reduced[2], point[2]);
+        double3 &point = points[point_idx];
+        min_vert = min(min_vert, point);
+        max_vert = max(max_vert, point);
     }
-    return reduced;
+
+    double3 eps(0.1, 0.1, 0.1);
+    vert0 = min_vert - eps;
+    vert1 = max_vert + eps;
 }
 
 void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_node)
 {
+    // Set bounds based on current points
+    update_vertices(points);
+
     if (index.size() <= max_points_per_node)
         return;
 
-    // Create all 8 children
+    // Create all 8 children with bounds derived from parent
     double3 half_size = 0.5 * (vert1 - vert0);
     for (int i = 0; i < 8; i++)
     {
@@ -102,9 +113,6 @@ void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_
 
 OctreeNode::OctreeNode(std::vector<double3> points, unsigned int max_points_per_node)
 {
-    vert0 = reduce(points, std::min<double>);
-    vert1 = reduce(points, std::max<double>);
-
     for (size_t i = 0; i < points.size(); i++)
         index.push_back(i);
 
@@ -291,13 +299,13 @@ int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
     OctreeNode root(pcl, 50);
-    // // root.stats();
-    // // root.test(pcl);
+    root.stats();
+    root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
     double4x4 pose = translation_matrix(double3(0, 0, -20));
-    // // double3 center(-10, 4, -10);
-    // // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
+    // double3 center(-10, 4, -10);
+    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
     std::pair<int, int> image_hw = std::make_pair(720, 540);
 
