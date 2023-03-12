@@ -255,6 +255,7 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
     double3x3 rotmat {{cam2world[0][0], cam2world[0][1], cam2world[0][2]}, {cam2world[1][0], cam2world[1][1], cam2world[1][2]}, {cam2world[2][0], cam2world[2][1], cam2world[2][2]}};
 
     // Cast rays
+    #pragma omp parallel for schedule(dynamic,1) collapse(2)
     for (int i=0; i<image_hw.first; i++)
         for (int j=0; j<image_hw.second; j++)
         {
@@ -263,7 +264,6 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
             double3 ray_world = mul(rotmat, unproj);
             auto res = node.ray_cast(origin, ray_world, radius_pixel, points);
             depth(j, i) = res.first;
-            // std::cout << "Cast pixel " << i << ", " << j << " with depth " << res.first << std::endl;
         }
     
     return depth;
@@ -285,8 +285,8 @@ struct profiler
             << std::endl;
     }
 };
-
 #define PROFILE_BLOCK(pbn) profiler _pfinstance(pbn)
+
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
@@ -303,7 +303,7 @@ int main()
 
     CImg depth;
     {
-        // PROFILE_BLOCK("Render");
+        PROFILE_BLOCK("Render");
         depth = render_depth(root, pcl, K, pose, image_hw);
     }
     std::cout << "Finished rendering" << std::endl;
