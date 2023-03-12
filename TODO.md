@@ -2,7 +2,8 @@
 
 ### Urgently
 - [x] Check depth correctness
-- [ ] Parallelise ray tracing with OMP or something else?
+- [x] Check render intrinsics with larger resolution
+- [ ] Parallelise ray tracing with OMP or something else? [OpenMP](https://bisqwit.iki.fi/story/howto/openmp/)
 - [ ] Resize node dimensions to fit only points within it (upon construction)
 - [ ] Parallelise octree creation
 - [ ] Ensure all works with non-regular input clouds (non-cubic)

@@ -243,8 +243,8 @@ std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const doub
 
 CImg render_depth(const OctreeNode &node, const std::vector<double3> points, const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
 {
-    // Create depth map
-    CImg depth(image_hw.first, image_hw.second);
+    // Create depth map, CImg uses column major storage, so depth[j, i], for j column, i row
+    CImg depth(image_hw.second, image_hw.first);
 
     // Compute radius pixel
     double3x3 Kinv = inverse(K);
@@ -258,33 +258,54 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
     for (int i=0; i<image_hw.first; i++)
         for (int j=0; j<image_hw.second; j++)
         {
-            double3 uv_hom(i+0.5, j+0.5, 1);
+            double3 uv_hom(j+0.5, i+0.5, 1);
             double3 unproj = normalize(mul(Kinv, uv_hom));
             double3 ray_world = mul(rotmat, unproj);
             auto res = node.ray_cast(origin, ray_world, radius_pixel, points);
-            depth(i, j) = res.first;
+            depth(j, i) = res.first;
             // std::cout << "Cast pixel " << i << ", " << j << " with depth " << res.first << std::endl;
         }
     
     return depth;
 }
 
-#include <cmath>
+#include <chrono>
+struct profiler
+{
+    std::string name;
+    std::chrono::high_resolution_clock::time_point p;
+    profiler(std::string const &n) :
+        name(n), p(std::chrono::high_resolution_clock::now()) { }
+    ~profiler()
+    {
+        using dura = std::chrono::duration<double>;
+        auto d = std::chrono::high_resolution_clock::now() - p;
+        std::cout << name << ": "
+            << std::chrono::duration_cast<dura>(d).count()
+            << std::endl;
+    }
+};
+
+#define PROFILE_BLOCK(pbn) profiler _pfinstance(pbn)
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
     OctreeNode root(pcl, 50);
-    // root.stats();
-    // root.test(pcl);
+    // // root.stats();
+    // // root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
     double4x4 pose = translation_matrix(double3(0, 0, -20));
-    // double3 center(-10, 4, -10);
-    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
-    double3x3 K {{500, 0, 0}, {0, 500, 0}, {50, 50, 1}};
-    std::pair<int, int> image_hw = std::make_pair(100, 100);
+    // // double3 center(-10, 4, -10);
+    // // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
+    double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
+    std::pair<int, int> image_hw = std::make_pair(720, 540);
 
-    auto depth = render_depth(root, pcl, K, pose, image_hw);
+    CImg depth;
+    {
+        // PROFILE_BLOCK("Render");
+        depth = render_depth(root, pcl, K, pose, image_hw);
+    }
     std::cout << "Finished rendering" << std::endl;
     std::cout << depth.min() << " " << depth.max() << std::endl;
 
