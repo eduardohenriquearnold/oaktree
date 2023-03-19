@@ -13,3 +13,6 @@
 - [ ] Load point cloud from LAS 
 - [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [ ] Replace linalg.h with [MathFu](https://github.com/google/mathfu), Google's SIMD compiled vector/matrix library
+
+### Try some real data
+[Sample data](http://kos.informatik.uni-osnabrueck.de/3Dscans/)

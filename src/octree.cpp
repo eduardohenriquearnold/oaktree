@@ -45,12 +45,10 @@ std::vector<double3> random_pointcloud(unsigned int num_points, double length)
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(-length / 2, length / 2);
 
-    std::vector<double3> points;
-    for (int i = 0; i < num_points; i++)
-    {
-        double3 point{distribution(generator), distribution(generator), distribution(generator)};
-        points.push_back(point);
-    }
+    std::vector<double3> points(num_points, double3());
+    for (double3 &point: points)
+        point = double3(distribution(generator), distribution(generator), distribution(generator));
+
     return points;
 }
 
@@ -68,9 +66,8 @@ void OctreeNode::update_vertices(std::vector<double3> points)
         max_vert = max(max_vert, point);
     }
 
-    double3 eps(0.1, 0.1, 0.1);
-    vert0 = min_vert - eps;
-    vert1 = max_vert + eps;
+    vert0 = min_vert;
+    vert1 = max_vert;
 }
 
 void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_node)
@@ -103,7 +100,7 @@ void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_
     }
     index.clear();
 
-    // Recursively prune child without points and split child with points
+    // Prune child without points and recursively split child with points
     for (auto it = children.begin(); it != children.end(); it++)
         if (it->index.size() == 0)
             children.erase(it--);
@@ -298,12 +295,12 @@ struct profiler
 int main()
 {
     std::vector<double3> pcl = random_pointcloud(100000, 2.);
-    OctreeNode root(pcl, 50);
+    OctreeNode root(pcl, 100);
     root.stats();
     root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
-    double4x4 pose = translation_matrix(double3(0, 0, -20));
+    double4x4 pose = translation_matrix(double3(0, 0, -5));
     // double3 center(-10, 4, -10);
     // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
