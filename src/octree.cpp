@@ -40,16 +40,23 @@ public:
     void update_vertices(std::vector<double3> points);
 };
 
-std::vector<double3> random_pointcloud(unsigned int num_points, double length)
+std::vector<double3> random_pointcloud(unsigned int num_points, double3 length)
 {
     std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution(-length / 2, length / 2);
+    std::uniform_real_distribution<double> distribution_x(-length[0] / 2, length[0] / 2);
+    std::uniform_real_distribution<double> distribution_y(-length[1] / 2, length[1] / 2);
+    std::uniform_real_distribution<double> distribution_z(-length[2] / 2, length[2] / 2);
 
     std::vector<double3> points(num_points, double3());
     for (double3 &point: points)
-        point = double3(distribution(generator), distribution(generator), distribution(generator));
+        point = double3(distribution_x(generator), distribution_y(generator), distribution_z(generator));
 
     return points;
+}
+
+std::vector<double3> random_pointcloud(unsigned int num_points, double length)
+{
+    return random_pointcloud(num_points, double3(length, length, length));
 }
 
 void OctreeNode::update_vertices(std::vector<double3> points)
@@ -295,15 +302,15 @@ struct profiler
 
 int main()
 {
-    std::vector<double3> pcl = random_pointcloud(100000, 2.);
+    std::vector<double3> pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
     OctreeNode root(pcl, 100);
     root.stats();
     root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
-    double4x4 pose = translation_matrix(double3(0, 0, -5));
-    // double3 center(-10, 4, -10);
-    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
+    // double4x4 pose = translation_matrix(double3(0, 0, -5));
+    double3 center(-10, 4, -10);
+    double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
     std::pair<int, int> image_hw = std::make_pair(720, 540);
 
