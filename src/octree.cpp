@@ -261,7 +261,8 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
 
     // Compute radius pixel
     double3x3 Kinv = inverse(K);
-    double radius_pixel = length(mul(Kinv, double3(0.5, 0.5, 0)));
+    const int pixel_dilation = 4;
+    double radius_pixel = pixel_dilation * length(mul(Kinv, double3(0.5, 0.5, 0)));
 
     // Get origin and rotation matrix (cam2world)
     double3 origin(cam2world[3][0], cam2world[3][1], cam2world[3][2]);
@@ -309,7 +310,7 @@ int main()
     std::cout << "Finished creating octree" << std::endl;
 
     // double4x4 pose = translation_matrix(double3(0, 0, -5));
-    double3 center(-10, 4, -10);
+    double3 center(-5, 4, -5);
     double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
     std::pair<int, int> image_hw = std::make_pair(720, 540);
