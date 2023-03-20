@@ -5,7 +5,7 @@
 - [x] Check render intrinsics with larger resolution
 - [x] Parallelise ray tracing with [OMP](https://bisqwit.iki.fi/story/howto/openmp/)
 - [x] Resize node dimensions to fit only points within it (upon construction)
-- [ ] Parallelise octree creation
+- [x] Parallelise octree creation
 - [ ] Ensure all works with non-regular input clouds (non-cubic)
 
 ### At some point

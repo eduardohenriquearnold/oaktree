@@ -100,11 +100,12 @@ void OctreeNode::split(std::vector<double3> points, unsigned int max_points_per_
     }
     index.clear();
 
-    // Prune child without points and recursively split child with points
+    // Prune children without points
+    std::remove_if(children.begin(), children.end(), [](OctreeNode &child){return child.index.size()==0;});
+
+    // Recursively split children points
+    #pragma omp parallel for schedule(dynamic,1)
     for (auto it = children.begin(); it != children.end(); it++)
-        if (it->index.size() == 0)
-            children.erase(it--);
-        else
             it->split(points, max_points_per_node);
 }
 
