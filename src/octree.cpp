@@ -309,9 +309,9 @@ int main()
     root.test(pcl);
     std::cout << "Finished creating octree" << std::endl;
 
-    // double4x4 pose = translation_matrix(double3(0, 0, -5));
-    double3 center(-5, 4, -5);
-    double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
+    double3 center(-0.5, 0., -0.5);
+    double4x4 pose = translation_matrix(center);
+    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
     std::pair<int, int> image_hw = std::make_pair(720, 540);
 
