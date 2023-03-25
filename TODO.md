@@ -8,11 +8,13 @@
 - [x] Ensure all works with non-regular input clouds (non-cubic)
 - [x] Ensure correctness for camera within octree
 
-- [ ] Split files and use CMake for build
+- [x] Split files and use CMake for build
 - [ ] Load point cloud from LAS/xyz formats
+- [ ] Test render in large scene
+- [ ] Extend render function to RGB
 - [ ] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
+- [ ] Replace linalg.h with Eigen/something that easily integrates with NumPy
 - [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
-- [ ] Replace linalg.h with [Eigen]()
 
 ### Try some real data
 [Sample data](http://kos.informatik.uni-osnabrueck.de/3Dscans/)

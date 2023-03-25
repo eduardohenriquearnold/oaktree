@@ -1,63 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <algorithm>
-#include <memory>
-#include <random>
-
-#include <linalg.h>
-using namespace linalg::ostream_overloads;
-using double3 = linalg::aliases::double3;
-using double3x3 = linalg::aliases::double3x3;
-using double4x4 = linalg::aliases::double4x4;
-
-//CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
-#define cimg_display 0
-#include <CImg.h>
-using CImg = cimg_library::CImg<double>;
-
-class OctreeNode
-{
-public:
-    // Opposite extreme vertices (specify position and extent of AABB)
-    double3 vert0;
-    double3 vert1;
-
-    // Point indices (for leaf nodes)
-    std::vector<size_t> index;
-
-    std::vector<OctreeNode> children;
-
-    OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
-    OctreeNode(std::vector<double3> points, unsigned int max_points_per_node);
-
-    void split(std::vector<double3> points, unsigned int max_points_per_node);
-    double ray_intersection(const double3 &origin, const double3 &dir) const;
-    std::pair<double, size_t> ray_cast(const double3 &origin, const double3 &dir, const double &radius_pixel, const std::vector<double3> &points) const;
-
-    void stats();
-    void test(std::vector<double3> points);
-    void update_vertices(std::vector<double3> points);
-};
-
-std::vector<double3> random_pointcloud(unsigned int num_points, double3 length)
-{
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution_x(-length[0] / 2, length[0] / 2);
-    std::uniform_real_distribution<double> distribution_y(-length[1] / 2, length[1] / 2);
-    std::uniform_real_distribution<double> distribution_z(-length[2] / 2, length[2] / 2);
-
-    std::vector<double3> points(num_points, double3());
-    for (double3 &point: points)
-        point = double3(distribution_x(generator), distribution_y(generator), distribution_z(generator));
-
-    return points;
-}
-
-std::vector<double3> random_pointcloud(unsigned int num_points, double length)
-{
-    return random_pointcloud(num_points, double3(length, length, length));
-}
+#include "octree.hpp"
 
 void OctreeNode::update_vertices(std::vector<double3> points)
 {
@@ -254,7 +195,7 @@ std::pair<double, size_t> OctreeNode::ray_cast(const double3 &origin, const doub
     return std::make_pair(-1, 0);
 }
 
-CImg render_depth(const OctreeNode &node, const std::vector<double3> points, const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
+CImg OctreeNode::render_depth(const std::vector<double3> points, const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
 {
     // Create depth map, CImg uses column major storage, so depth[j, i], for j column, i row
     CImg depth(image_hw.second, image_hw.first);
@@ -276,54 +217,9 @@ CImg render_depth(const OctreeNode &node, const std::vector<double3> points, con
             double3 uv_hom(j+0.5, i+0.5, 1);
             double3 unproj = normalize(mul(Kinv, uv_hom));
             double3 ray_world = mul(rotmat, unproj);
-            auto res = node.ray_cast(origin, ray_world, radius_pixel, points);
+            auto res = ray_cast(origin, ray_world, radius_pixel, points);
             depth(j, i) = res.first;
         }
     
     return depth;
-}
-
-#include <chrono>
-struct profiler
-{
-    std::string name;
-    std::chrono::high_resolution_clock::time_point p;
-    profiler(std::string const &n) :
-        name(n), p(std::chrono::high_resolution_clock::now()) { }
-    ~profiler()
-    {
-        using dura = std::chrono::duration<double>;
-        auto d = std::chrono::high_resolution_clock::now() - p;
-        std::cout << name << ": "
-            << std::chrono::duration_cast<dura>(d).count()
-            << std::endl;
-    }
-};
-#define PROFILE_BLOCK(pbn) profiler _pfinstance(pbn)
-
-int main()
-{
-    std::vector<double3> pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
-    OctreeNode root(pcl, 100);
-    root.stats();
-    root.test(pcl);
-    std::cout << "Finished creating octree" << std::endl;
-
-    double3 center(-0.5, 0., -0.5);
-    double4x4 pose = translation_matrix(center);
-    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
-    double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
-    std::pair<int, int> image_hw = std::make_pair(720, 540);
-
-    CImg depth;
-    {
-        PROFILE_BLOCK("Render");
-        depth = render_depth(root, pcl, K, pose, image_hw);
-    }
-    std::cout << "Finished rendering" << std::endl;
-    std::cout << depth.min() << " " << depth.max() << std::endl;
-
-    depth.normalize(0, 255);
-    depth.save("depth.bmp");
-    std::cout << "Saved depth map" << std::endl;
 }
