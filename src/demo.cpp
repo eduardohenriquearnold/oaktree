@@ -36,7 +36,7 @@ int main()
     CImg depth;
     {
         PROFILE_BLOCK("Render");
-        depth = root.render_depth(pcl, K, pose, image_hw);
+        depth = root.render_depth(K, pose, image_hw);
     }
     std::cout << "Finished rendering" << std::endl;
     std::cout << depth.min() << " " << depth.max() << std::endl;
