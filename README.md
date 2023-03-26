@@ -26,8 +26,8 @@ cd build
 - [x] Ensure correctness for camera within octree
 - [x] Split files and use CMake for build
 - [x] Store points/color within OctreeNode, not indices
+- [x] Extend render function to RGB
 
-- [ ] Extend render function to RGB
 - [ ] Replace linalg.h with Eigen
 - [ ] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
 - [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)

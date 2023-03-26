@@ -2,9 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <queue>
-#include <algorithm>
 #include <memory>
-#include <random>
+#include <stdexcept>
 
 #include <linalg.h>
 using namespace linalg::ostream_overloads;
@@ -21,11 +20,11 @@ class OctreeNode
 {
 public:
     OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
-    OctreeNode(std::vector<double3> points, unsigned int max_points_per_node);
+    OctreeNode(unsigned int max_points_per_node, std::vector<double3> given_points, std::vector<double3> given_points_rgb=std::vector<double3>());
 
-    void stats();
-    void test(std::vector<double3> points);
-    CImg render_depth(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw);
+    void stats() const;
+    void test() const;
+    std::pair<CImg, CImg> render(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw);
 
 private:
     // Opposite extreme vertices (specify position and extent of AABB)

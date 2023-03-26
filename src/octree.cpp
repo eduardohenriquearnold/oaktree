@@ -39,13 +39,17 @@ void OctreeNode::split(unsigned int max_points_per_node)
 
     // Distribute points into children
     double3 node_center = 0.5 * (vert0 + vert1);
-    for (const double3 &point_original : points)
+    for (size_t idx=0; idx<points.size(); idx++)
     {
-        double3 point = point_original - node_center;
+        double3 point = points[idx] - node_center;
         int children_id = (point.x > 0 ? 1 : 0) + (point.y > 0 ? 1 : 0) * 2 + (point.z > 0 ? 1 : 0) * 4;
-        children[children_id].points.push_back(point_original);
+        children[children_id].points.push_back(points[idx]);
+
+        if (!points_rgb.empty())
+            children[children_id].points_rgb.push_back(points_rgb[idx]);
     }
     points.clear();
+    points_rgb.clear();
 
     // Prune children without points
     std::remove_if(children.begin(), children.end(), [](OctreeNode &child){return child.points.empty();});
@@ -56,24 +60,28 @@ void OctreeNode::split(unsigned int max_points_per_node)
             child.split(max_points_per_node);
 }
 
-OctreeNode::OctreeNode(std::vector<double3> given_points, unsigned int max_points_per_node)
+OctreeNode::OctreeNode(unsigned int max_points_per_node, std::vector<double3> given_points, std::vector<double3> given_points_rgb)
 {
+    if (!given_points_rgb.empty() && (given_points.size() != given_points_rgb.size()))
+        throw std::range_error("Expected points_rgb to be empty or match points size");
+
     points = std::vector<double3>(given_points);
+    points_rgb = std::vector<double3>(given_points_rgb);
     split(max_points_per_node);
 }
 
 // Show stats of the Octree
-void OctreeNode::stats()
+void OctreeNode::stats() const
 {
     int num_points = 0;
     int num_nodes = 0;
     int max_level = 0;
-    std::queue<OctreeNode *> q;
+    std::queue<const OctreeNode *> q;
     std::queue<unsigned int> level;
     q.push(this);
     level.push(0);
 
-    OctreeNode *current;
+    const OctreeNode *current;
     unsigned int current_level;
     while (!q.empty())
     {
@@ -87,7 +95,7 @@ void OctreeNode::stats()
         if (current_level > max_level)
             max_level = current_level;
 
-        for (OctreeNode &child : current->children)
+        for (const OctreeNode &child : current->children)
         {
             q.push(&child);
             level.push(current_level + 1);
@@ -98,28 +106,23 @@ void OctreeNode::stats()
 }
 
 // Test that all leaf nodes have points within their bounds
-void OctreeNode::test(std::vector<double3> points)
+void OctreeNode::test() const
 {
-    std::queue<OctreeNode *> q;
+    std::queue<const OctreeNode *> q;
     q.push(this);
 
-    OctreeNode *current;
+    const OctreeNode *current;
     while (!q.empty())
     {
         current = q.front();
         q.pop();
 
-        for (OctreeNode &child : current->children)
+        for (const OctreeNode &child : current->children)
             q.push(&child);
 
-        for (double3 &pt : current->points)
-        {
+        for (const double3 &pt : current->points)
             if ((pt[0] < current->vert0[0]) || (pt[0] > current->vert1[0]) || (pt[1] < current->vert0[1]) || (pt[1] > current->vert1[1]) || (pt[2] < current->vert0[2]) || (pt[2] > current->vert1[2]))
-            {
-                std::cout << "Found point outside node bounds!" << std::endl;
-                return;
-            }
-        }
+                throw std::logic_error("Found point outside node bounds!");
     }
     std::cout << "Octree test passed." << std::endl;
 }
@@ -196,10 +199,12 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
     return std::make_pair(-1, double3());
 }
 
-CImg OctreeNode::render_depth(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
+// Returns pair (depthmap, RGB) 
+std::pair<CImg,CImg> OctreeNode::render(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
 {
     // Create depth map, CImg uses column major storage, so depth[j, i], for j column, i row
     CImg depth(image_hw.second, image_hw.first);
+    CImg rgb(image_hw.second, image_hw.first, 1, 3);
 
     // Compute radius pixel
     double3x3 Kinv = inverse(K);
@@ -220,7 +225,10 @@ CImg OctreeNode::render_depth(const double3x3 K, const double4x4 cam2world, std:
             double3 ray_world = mul(rotmat, unproj);
             auto res = ray_cast(origin, ray_world, radius_pixel);
             depth(j, i) = res.first;
+            rgb(j, i, 0) = 255*res.second[0];
+            rgb(j, i, 1) = 255*res.second[1];
+            rgb(j, i, 2) = 255*res.second[2];
         }
     
-    return depth;
+    return std::make_pair(depth, rgb);
 }

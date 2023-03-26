@@ -21,27 +21,39 @@ struct profiler
 
 int main()
 {
+    // create random point cloud and color components
     std::vector<double3> pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
-    OctreeNode root(pcl, 100);
+    std::vector<double3> rgb = std::vector<double3>(pcl);
+    for (double3 &color : rgb)
+        color = (normalize(color) + 1)/2;
+
+    // create and test octree
+    OctreeNode root(100, pcl, rgb);
     root.stats();
-    root.test(pcl);
+    root.test();
     std::cout << "Finished creating octree" << std::endl;
 
-    double3 center(-0.5, 0., -0.5);
-    double4x4 pose = translation_matrix(center);
-    // double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
+    // set extrinsics/intrinsics
+    double3 center(-1.5, 1.5, -1.5);
+    // double4x4 pose = translation_matrix(center);
+    double4x4 pose = inverse(linalg::lookat_matrix<double>(center, double3(0, 0, 0), double3(0,-1,0), linalg::pos_z));
     double3x3 K {{500, 0, 0}, {0, 500, 0}, {270, 360, 1}};
     std::pair<int, int> image_hw = std::make_pair(720, 540);
 
-    CImg depth;
+    // render depth/rgb image
+    CImg depth, color;
     {
         PROFILE_BLOCK("Render");
-        depth = root.render_depth(K, pose, image_hw);
+        auto res = root.render(K, pose, image_hw);
+        depth = res.first;
+        color = res.second;
     }
     std::cout << "Finished rendering" << std::endl;
     std::cout << depth.min() << " " << depth.max() << std::endl;
 
+    // save result to file
     depth.normalize(0, 255);
     depth.save("depth.bmp");
-    std::cout << "Saved depth map" << std::endl;
+    color.save("color.bmp");
+    std::cout << "Saved render" << std::endl;
 }
