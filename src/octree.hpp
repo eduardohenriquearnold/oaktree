@@ -5,11 +5,10 @@
 #include <memory>
 #include <stdexcept>
 
-#include <linalg.h>
-using namespace linalg::ostream_overloads;
-using double3 = linalg::aliases::double3;
-using double3x3 = linalg::aliases::double3x3;
-using double4x4 = linalg::aliases::double4x4;
+#include <eigen3/Eigen/Dense>
+using double3 = Eigen::Vector3d;
+using double3x3 = Eigen::Matrix<double, 3, 3>;
+using double4x4 = Eigen::Matrix<double, 4, 4>;
 
 //CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
 #define cimg_display 0
@@ -24,7 +23,7 @@ public:
 
     void stats() const;
     void test() const;
-    std::pair<CImg, CImg> render(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw);
+    std::pair<CImg, CImg> render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
 
 private:
     // Opposite extreme vertices (specify position and extent of AABB)

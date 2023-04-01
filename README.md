@@ -1,6 +1,18 @@
 # OakTree
 Render large point clouds efficiently using Octrees.
 
+## Dependencies
+
+### Eigen 3.4
+This dependency is included in the Docker image, but can be installed with
+```bash
+git clone --branch 3.4 --depth 1 https://gitlab.com/libeigen/eigen.git
+mkdir -p eigen/build_dir
+cd eigen/build_dir
+cmake ..
+sudo make install
+```
+
 ## Build
 ```bash
 mkdir build

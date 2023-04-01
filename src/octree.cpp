@@ -9,8 +9,8 @@ void OctreeNode::update_vertices()
     double3 max_vert = points[0];
     for (const double3 &point : points)
     {
-        min_vert = min(min_vert, point);
-        max_vert = max(max_vert, point);
+        min_vert = min_vert.cwiseMin(point);
+        max_vert = max_vert.cwiseMax(point);
     }
 
     vert0 = min_vert;
@@ -32,8 +32,8 @@ void OctreeNode::split(unsigned int max_points_per_node)
         int x = i % 2;
         int y = (i / 2) % 2;
         int z = (i / 4) % 2;
-        double3 v0 = double3(x, y, z) * half_size + vert0;
-        double3 v1 = vert1 - double3(1 - x, 1 - y, 1 - z) * half_size;
+        double3 v0 = double3(x, y, z).cwiseProduct(half_size) + vert0;
+        double3 v1 = vert1 - double3(1 - x, 1 - y, 1 - z).cwiseProduct(half_size);
         children.push_back(OctreeNode(v0, v1));
     }
 
@@ -42,7 +42,7 @@ void OctreeNode::split(unsigned int max_points_per_node)
     for (size_t idx=0; idx<points.size(); idx++)
     {
         double3 point = points[idx] - node_center;
-        int children_id = (point.x > 0 ? 1 : 0) + (point.y > 0 ? 1 : 0) * 2 + (point.z > 0 ? 1 : 0) * 4;
+        int children_id = (point.x() > 0 ? 1 : 0) + (point.y() > 0 ? 1 : 0) * 2 + (point.z() > 0 ? 1 : 0) * 4;
         children[children_id].points.push_back(points[idx]);
 
         if (!points_rgb.empty())
@@ -131,16 +131,16 @@ void OctreeNode::test() const
 double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) const
 {
     // Based on https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
-    double3 tvert0 = (vert0 - origin) / dir;
-    double3 tvert1 = (vert1 - origin) / dir;
+    double3 tvert0 = (vert0 - origin).cwiseQuotient(dir);
+    double3 tvert1 = (vert1 - origin).cwiseQuotient(dir);
 
-    double3 tmin = min(tvert0, tvert1);
-    double3 tmax = max(tvert0, tvert1);
+    double3 tmin = tvert0.cwiseMin(tvert1);
+    double3 tmax = tvert0.cwiseMax(tvert1);
 
-    double tmin_all = maxelem(tmin);
-    double tmax_all = minelem(tmax);
+    double tmin_all = tmin.maxCoeff();
+    double tmax_all = tmax.minCoeff();
 
-    if ((tmin_all > tmax.y) || (tmin.y > tmax_all) || (tmin_all > tmax.z) || (tmin.z > tmax_all))
+    if ((tmin_all > tmax.y()) || (tmin.y() > tmax_all) || (tmin_all > tmax.z()) || (tmin.z() > tmax_all))
         return -1;
 
     return tmin_all;
@@ -171,8 +171,8 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         for (size_t idx = 0; idx < current->points.size(); idx++)
         {
             double3 point = current->points[idx] - origin;
-            double distance_along_ray = dot(point, dir);
-            double radius_point = distance(point, distance_along_ray * dir);
+            double distance_along_ray = point.dot(dir);
+            double radius_point = (point - distance_along_ray * dir).norm();
             double radius_cone = radius_pixel * distance_along_ray;
             if (radius_point <= radius_cone && distance_along_ray < shortest_ray_distance)
             {
@@ -200,20 +200,20 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
 }
 
 // Returns pair (depthmap, RGB) 
-std::pair<CImg,CImg> OctreeNode::render(const double3x3 K, const double4x4 cam2world, std::pair<int, int> image_hw)
+std::pair<CImg,CImg> OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw)
 {
     // Create depth map, CImg uses column major storage, so depth[j, i], for j column, i row
     CImg depth(image_hw.second, image_hw.first);
     CImg rgb(image_hw.second, image_hw.first, 1, 3);
 
     // Compute radius pixel
-    double3x3 Kinv = inverse(K);
+    double3x3 Kinv = K.inverse();
     const int pixel_dilation = 4;
-    double radius_pixel = pixel_dilation * length(mul(Kinv, double3(0.5, 0.5, 0)));
+    double radius_pixel = pixel_dilation * (Kinv * double3(0.5, 0.5, 0)).norm();
 
     // Get origin and rotation matrix (cam2world)
-    double3 origin(cam2world[3][0], cam2world[3][1], cam2world[3][2]);
-    double3x3 rotmat {{cam2world[0][0], cam2world[0][1], cam2world[0][2]}, {cam2world[1][0], cam2world[1][1], cam2world[1][2]}, {cam2world[2][0], cam2world[2][1], cam2world[2][2]}};
+    double3 origin = cam2world(Eigen::seq(0, 2), 3);
+    double3x3 rotmat = cam2world(Eigen::seq(0, 2), Eigen::seq(0, 2));
 
     // Cast rays
     #pragma omp parallel for schedule(dynamic,1) collapse(2)
@@ -221,8 +221,8 @@ std::pair<CImg,CImg> OctreeNode::render(const double3x3 K, const double4x4 cam2w
         for (int j=0; j<image_hw.second; j++)
         {
             double3 uv_hom(j+0.5, i+0.5, 1);
-            double3 unproj = normalize(mul(Kinv, uv_hom));
-            double3 ray_world = mul(rotmat, unproj);
+            double3 unproj = (Kinv * uv_hom).normalized();
+            double3 ray_world = rotmat * unproj;
             auto res = ray_cast(origin, ray_world, radius_pixel);
             depth(j, i) = res.first;
             rgb(j, i, 0) = 255*res.second[0];
