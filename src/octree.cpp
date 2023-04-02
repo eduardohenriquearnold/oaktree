@@ -196,7 +196,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         }
     }
 
-    return std::make_pair(-1, double3());
+    return std::make_pair(-1, double3::Zero());
 }
 
 // Returns pair (depthmap, RGB) 

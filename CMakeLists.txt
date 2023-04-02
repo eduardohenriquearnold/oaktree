@@ -3,6 +3,7 @@ project(OakTree VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "-O3")
 
 find_package(OpenMP REQUIRED)
 find_package (Eigen3 3.4 REQUIRED NO_MODULE)
