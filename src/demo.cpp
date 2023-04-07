@@ -38,9 +38,9 @@ Eigen::Matrix<typename Derived::Scalar,4,4> lookAt(Derived const & eye, Derived 
 int main()
 {
     // create random point cloud and color components
-    std::vector<double3> pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
-    std::vector<double3> rgb = std::vector<double3>(pcl);
-    for (double3 &color : rgb)
+    doubleX3 pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
+    doubleX3 rgb = doubleX3(pcl);
+    for (auto color : rgb.rowwise())
         color = (color.normalized().array() + 1)/2;
 
     // create and test octree
@@ -58,9 +58,6 @@ int main()
            0, 500, 360,
            0,   0,   1;
     
-    std::cout << K << std::endl;
-    std::cout << pose << std::endl;
-
     // render depth/rgb image
     CImg depth, color;
     {

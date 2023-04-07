@@ -2,19 +2,11 @@
 
 void OctreeNode::update_vertices()
 {
-    if (points.size() == 0)
+    if (!points.rows())
         return;
 
-    double3 min_vert = points[0];
-    double3 max_vert = points[0];
-    for (const double3 &point : points)
-    {
-        min_vert = min_vert.cwiseMin(point);
-        max_vert = max_vert.cwiseMax(point);
-    }
-
-    vert0 = min_vert;
-    vert1 = max_vert;
+    vert0 = points.colwise().minCoeff();
+    vert1 = points.colwise().maxCoeff();
 }
 
 void OctreeNode::split(unsigned int max_points_per_node)
@@ -22,7 +14,7 @@ void OctreeNode::split(unsigned int max_points_per_node)
     // Set bounds based on current points
     update_vertices();
 
-    if (points.size() <= max_points_per_node)
+    if (points.rows() <= max_points_per_node)
         return;
 
     // Create all 8 children with bounds derived from parent
@@ -39,20 +31,27 @@ void OctreeNode::split(unsigned int max_points_per_node)
 
     // Distribute points into children
     double3 node_center = 0.5 * (vert0 + vert1);
-    for (size_t idx=0; idx<points.size(); idx++)
+    for (size_t idx=0; idx<points.rows(); idx++)
     {
-        double3 point = points[idx] - node_center;
+        double3 point = points.row(idx).transpose() - node_center;
         int children_id = (point.x() > 0 ? 1 : 0) + (point.y() > 0 ? 1 : 0) * 2 + (point.z() > 0 ? 1 : 0) * 4;
-        children[children_id].points.push_back(points[idx]);
 
-        if (!points_rgb.empty())
-            children[children_id].points_rgb.push_back(points_rgb[idx]);
+        doubleX3 &children_points = children[children_id].points;
+        children_points.conservativeResize(children_points.rows()+1, 3);
+        children_points.row(children_points.rows() - 1) = points.row(idx);
+
+        if (points_rgb.rows())
+        {
+            doubleX3 &children_points_rgb = children[children_id].points_rgb;
+            children_points_rgb.conservativeResize(children_points_rgb.rows()+1, 3);
+            children_points_rgb.row(children_points_rgb.rows() - 1) = points_rgb.row(idx);
+        }
     }
-    points.clear();
-    points_rgb.clear();
+    points.resize(0, 3);
+    points_rgb.resize(0, 3);
 
     // Prune children without points
-    std::remove_if(children.begin(), children.end(), [](OctreeNode &child){return child.points.empty();});
+    std::remove_if(children.begin(), children.end(), [](OctreeNode &child){return child.points.rows() == 0;});
 
     // Recursively split children points
     #pragma omp parallel for schedule(dynamic,1)
@@ -60,13 +59,13 @@ void OctreeNode::split(unsigned int max_points_per_node)
             child.split(max_points_per_node);
 }
 
-OctreeNode::OctreeNode(unsigned int max_points_per_node, std::vector<double3> given_points, std::vector<double3> given_points_rgb)
+OctreeNode::OctreeNode(unsigned int max_points_per_node, const doubleX3 &given_points, const doubleX3 &given_points_rgb)
 {
-    if (!given_points_rgb.empty() && (given_points.size() != given_points_rgb.size()))
+    if (!given_points_rgb.rows() && (given_points.rows() != given_points_rgb.rows()))
         throw std::range_error("Expected points_rgb to be empty or match points size");
 
-    points = std::vector<double3>(given_points);
-    points_rgb = std::vector<double3>(given_points_rgb);
+    points = doubleX3(given_points);
+    points_rgb = doubleX3(given_points_rgb);
     split(max_points_per_node);
 }
 
@@ -91,7 +90,7 @@ void OctreeNode::stats() const
         level.pop();
 
         num_nodes++;
-        num_points += current->points.size();
+        num_points += current->points.rows();
         if (current_level > max_level)
             max_level = current_level;
 
@@ -120,7 +119,7 @@ void OctreeNode::test() const
         for (const OctreeNode &child : current->children)
             q.push(&child);
 
-        for (const double3 &pt : current->points)
+        for (auto pt : current->points.rowwise())
             if ((pt[0] < current->vert0[0]) || (pt[0] > current->vert1[0]) || (pt[1] < current->vert0[1]) || (pt[1] > current->vert1[1]) || (pt[2] < current->vert0[2]) || (pt[2] > current->vert1[2]))
                 throw std::logic_error("Found point outside node bounds!");
     }
@@ -168,9 +167,9 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         node_queue.pop();
 
         // Check if points fall within cone, return closest one along ray
-        for (size_t idx = 0; idx < current->points.size(); idx++)
+        for (size_t idx = 0; idx < current->points.rows(); idx++)
         {
-            double3 point = current->points[idx] - origin;
+            double3 point = current->points.row(idx).transpose() - origin;
             double distance_along_ray = point.dot(dir);
             double radius_point = (point - distance_along_ray * dir).norm();
             double radius_cone = radius_pixel * distance_along_ray;
@@ -183,8 +182,8 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         if (best_idx != -1)
         {
             double3 rgb;
-            if (!current->points_rgb.empty())
-                rgb = current->points_rgb[best_idx];
+            if (current->points_rgb.rows())
+                rgb = current->points_rgb.row(best_idx);
             return std::make_pair(shortest_ray_distance, rgb);
         }
 
