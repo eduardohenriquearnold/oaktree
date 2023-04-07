@@ -9,6 +9,7 @@
 using double3 = Eigen::Vector3d;
 using double3x3 = Eigen::Matrix<double, 3, 3>;
 using double4x4 = Eigen::Matrix<double, 4, 4>;
+using doubleX3 = Eigen::MatrixX3d;
 
 //CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
 #define cimg_display 0
@@ -19,7 +20,7 @@ class OctreeNode
 {
 public:
     OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
-    OctreeNode(unsigned int max_points_per_node, std::vector<double3> given_points, std::vector<double3> given_points_rgb=std::vector<double3>());
+    OctreeNode(unsigned int max_points_per_node, const doubleX3 &given_points, const doubleX3 &given_points_rgb=doubleX3());
 
     void stats() const;
     void test() const;

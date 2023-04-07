@@ -60,13 +60,17 @@ void OctreeNode::split(unsigned int max_points_per_node)
             child.split(max_points_per_node);
 }
 
-OctreeNode::OctreeNode(unsigned int max_points_per_node, std::vector<double3> given_points, std::vector<double3> given_points_rgb)
+OctreeNode::OctreeNode(unsigned int max_points_per_node, const doubleX3 &given_points, const doubleX3 &given_points_rgb)
 {
-    if (!given_points_rgb.empty() && (given_points.size() != given_points_rgb.size()))
+    if (given_points_rgb.rows() && (given_points.rows() != given_points_rgb.rows()))
         throw std::range_error("Expected points_rgb to be empty or match points size");
 
-    points = std::vector<double3>(given_points);
-    points_rgb = std::vector<double3>(given_points_rgb);
+    for (auto point: given_points.rowwise())
+        points.push_back(double3(point.transpose()));
+
+    for (auto point_rgb: given_points_rgb.rowwise())
+        points_rgb.push_back(double3(point_rgb.transpose()));
+
     split(max_points_per_node);
 }
 
