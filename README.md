@@ -40,8 +40,8 @@ cd build
 - [x] Store points/color within OctreeNode, not indices
 - [x] Extend render function to RGB
 
-- [ ] Replace linalg.h with Eigen
-- [ ] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
+- [x] Replace linalg.h with Eigen
+- [x] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
 - [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [ ] Test render in large scene (python-land)
 - [ ] Fix black line artifacts near node edges

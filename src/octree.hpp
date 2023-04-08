@@ -11,6 +11,10 @@ using double3x3 = Eigen::Matrix<double, 3, 3>;
 using double4x4 = Eigen::Matrix<double, 4, 4>;
 using doubleX3 = Eigen::MatrixX3d;
 
+#include <cereal/cereal.hpp>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/vector.hpp>
+
 //CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
 #define cimg_display 0
 #include <CImg.h>
@@ -19,12 +23,14 @@ using CImg = cimg_library::CImg<double>;
 class OctreeNode
 {
 public:
+    OctreeNode(){};
     OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1){};
     OctreeNode(unsigned int max_points_per_node, const doubleX3 &given_points, const doubleX3 &given_points_rgb=doubleX3());
 
     void stats() const;
     void test() const;
     std::pair<CImg, CImg> render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
+    template<class Archive> void serialize(Archive &ar){ar(vert0, vert1, points, points_rgb, children);};
 
 private:
     // Opposite extreme vertices (specify position and extent of AABB)

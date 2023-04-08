@@ -1,4 +1,5 @@
 #include <chrono>
+#include <fstream>
 #include "octree.hpp"
 #include "io.hpp"
 
@@ -35,7 +36,7 @@ Eigen::Matrix<typename Derived::Scalar,4,4> lookAt(Derived const & eye, Derived 
     return mat;
 }
 
-int main()
+void create()
 {
     // create random point cloud and color components
     doubleX3 pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
@@ -48,6 +49,27 @@ int main()
     root.stats();
     root.test();
     std::cout << "Finished creating octree" << std::endl;
+
+    std::ofstream out("octree.bin", std::ios::binary);
+    cereal::BinaryOutputArchive archive_o(out);
+    archive_o(root);
+    std::cout << "Saved octree" << std::endl;
+}
+
+void load(OctreeNode &node)
+{
+    std::ifstream asd("octree.bin", std::ios::binary);
+    cereal::BinaryInputArchive archive_i(asd);
+    archive_i(node);
+    std::cout << "Loaded octree" << std::endl;
+    node.stats();
+    node.test();
+}
+
+int main()
+{
+    OctreeNode root;
+    load(root);
 
     // set extrinsics/intrinsics
     std::pair<int, int> image_hw = std::make_pair(720, 540);
