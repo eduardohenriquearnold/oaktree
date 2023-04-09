@@ -74,6 +74,21 @@ OctreeNode::OctreeNode(unsigned int max_points_per_node, const doubleX3 &given_p
     split(max_points_per_node);
 }
 
+OctreeNode::OctreeNode(std::filesystem::path path)
+{
+    std::ifstream input_stream(path, std::ios::binary);
+    cereal::BinaryInputArchive archive(input_stream);
+    archive(*this);
+}
+
+void OctreeNode::save(std::filesystem::path path)
+{
+    std::ofstream output_stream(path, std::ios::binary);
+    cereal::BinaryOutputArchive archive(output_stream);
+    archive(*this);
+
+}
+
 // Show stats of the Octree
 void OctreeNode::stats() const
 {

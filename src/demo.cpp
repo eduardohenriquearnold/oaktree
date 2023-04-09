@@ -36,40 +36,31 @@ Eigen::Matrix<typename Derived::Scalar,4,4> lookAt(Derived const & eye, Derived 
     return mat;
 }
 
-void create()
-{
-    // create random point cloud and color components
-    doubleX3 pcl = random_pointcloud(100000, double3(3., 0.5, 2.));
-    doubleX3 rgb = doubleX3(pcl);
-    for (auto color : rgb.rowwise())
-        color = (color.normalized().array() + 1)/2;
-
-    // create and test octree
-    OctreeNode root(100, pcl, rgb);
-    root.stats();
-    root.test();
-    std::cout << "Finished creating octree" << std::endl;
-
-    std::ofstream out("octree.bin", std::ios::binary);
-    cereal::BinaryOutputArchive archive_o(out);
-    archive_o(root);
-    std::cout << "Saved octree" << std::endl;
-}
-
-void load(OctreeNode &node)
-{
-    std::ifstream asd("octree.bin", std::ios::binary);
-    cereal::BinaryInputArchive archive_i(asd);
-    archive_i(node);
-    std::cout << "Loaded octree" << std::endl;
-    node.stats();
-    node.test();
-}
-
 int main()
 {
-    OctreeNode root;
-    load(root);
+    std::filesystem::path path("octree.bin");
+
+    if (!std::filesystem::exists(path))
+    {
+        // create random point cloud and color components
+        doubleX3 pcl = random_pointcloud(1000000, double3(3., 0.5, 2.));
+        doubleX3 rgb = doubleX3(pcl);
+        for (auto color : rgb.rowwise())
+            color = (color.normalized().array() + 1)/2;
+
+        // create and test octree
+        OctreeNode root(100, pcl, rgb);
+        std::cout << "Finished creating octree" << std::endl;
+
+        root.save(path);
+        std::cout << "Saved octree" << std::endl;
+        return 0;
+    }
+
+    OctreeNode root(path);
+    std::cout << "Loaded octree" << std::endl;
+    root.stats();
+    root.test();
 
     // set extrinsics/intrinsics
     std::pair<int, int> image_hw = std::make_pair(720, 540);
