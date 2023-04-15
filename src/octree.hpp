@@ -12,13 +12,10 @@ using double3 = Eigen::Vector3d;
 using double3x3 = Eigen::Matrix<double, 3, 3>;
 using double4x4 = Eigen::Matrix<double, 4, 4>;
 using doubleX3 = Eigen::MatrixX3d;
+using doubleX = Eigen::VectorXf;
 
 #include "io.hpp"
 
-//CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
-#define cimg_display 0
-#include <CImg.h>
-using CImg = cimg_library::CImg<double>;
 
 class OctreeNode
 {
@@ -30,7 +27,7 @@ public:
 
     void stats() const;
     void test() const;
-    std::pair<CImg, CImg> render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
+    doubleX render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
     template<class Archive> void serialize(Archive &ar){ar(vert0, vert1, points, points_rgb, children);};
     void save(std::filesystem::path path);
 

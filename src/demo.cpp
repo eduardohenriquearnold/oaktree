@@ -1,7 +1,10 @@
 #include <chrono>
-#include <fstream>
 #include "octree.hpp"
-#include "io.hpp"
+
+//CImg Docs https://cimg.eu/reference/structcimg__library_1_1CImg.html
+#define cimg_display 0
+#include <CImg.h>
+using CImg = cimg_library::CImg<double>;
 
 struct profiler
 {
@@ -34,6 +37,24 @@ Eigen::Matrix<typename Derived::Scalar,4,4> lookAt(Derived const & eye, Derived 
     mat.col(2) << z, 0;
     mat.col(3) << eye, 1;
     return mat;
+}
+
+std::pair<CImg, CImg> convert_eigen_cimg(const doubleX &rendered, std::pair<int, int> image_hw)
+{
+    CImg depth(image_hw.second, image_hw.first);
+    CImg rgb(image_hw.second, image_hw.first, 1, 3);
+    auto idx = [image_hw] (size_t i, size_t j, size_t ch) {return i * 4 * image_hw.second + j * 4 + ch; };
+
+    for (int i=0; i< image_hw.first; i++)
+        for (int j=0; j< image_hw.second; j++)
+        {
+            rgb(j, i, 0) = 255 * rendered(idx(i, j, 0));
+            rgb(j, i, 1) = 255 * rendered(idx(i, j, 1));
+            rgb(j, i, 2) = 255 * rendered(idx(i, j, 2));
+            depth(j, i) = rendered(idx(i, j, 3));
+        }
+
+    return std::make_pair(depth, rgb);
 }
 
 int main()
@@ -72,13 +93,15 @@ int main()
            0,   0,   1;
     
     // render depth/rgb image
-    CImg depth, color;
+    doubleX rendered;
     {
         PROFILE_BLOCK("Render");
-        auto res = root.render(K, pose, image_hw);
-        depth = res.first;
-        color = res.second;
+        rendered = root.render(K, pose, image_hw);
     }
+    CImg depth, color;
+    auto res = convert_eigen_cimg(rendered, image_hw);
+    depth = res.first;
+    color = res.second;
     std::cout << "Finished rendering" << std::endl;
     std::cout << depth.min() << " " << depth.max() << std::endl;
 
