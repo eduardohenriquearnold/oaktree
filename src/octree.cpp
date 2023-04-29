@@ -221,11 +221,12 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
 
 // Returns flattened RGBD image array (row major).
 // Original shape is (H, W, 4), where (:, :, :3) is RGB and (3, :, 3) is depth.
-doubleX OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw)
+ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw)
 {
     // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (4, H, W), row-major
-    doubleX image(4 * image_hw.first * image_hw.second);
-    auto idx = [image_hw] (size_t i, size_t j, size_t ch) {return i * 4 * image_hw.second + j * 4 + ch; };
+    // doubleX image(4 * image_hw.first * image_hw.second);
+    // auto idx = [image_hw] (size_t i, size_t j, size_t ch) {return i * 4 * image_hw.second + j * 4 + ch; };
+    ImageTensor image(image_hw.first, image_hw.second, 4);
 
     // Compute radius pixel
     double3x3 Kinv = K.inverse();
@@ -245,15 +246,11 @@ doubleX OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::
             double3 unproj = (Kinv * uv_hom).normalized();
             double3 ray_world = rotmat * unproj;
             auto res = ray_cast(origin, ray_world, radius_pixel);
-            image(idx(i, j, 0)) = res.second[0];
-            image(idx(i, j, 1)) = res.second[1];
-            image(idx(i, j, 2)) = res.second[2];
-            image(idx(i, j, 3)) = res.first;
+            image(i, j, 0) = res.second[0];
+            image(i, j, 1) = res.second[1];
+            image(i, j, 2) = res.second[2];
+            image(i, j, 3) = res.first;
         }
 
     return image;
-
-    // Create ownership over image data (so destroyer can be called when gets out of scope)
-    // nb::capsule owner(img, [](void *p) noexcept { delete[] (Image*) p; });
-    // return nbimage(img.data, 3, img.shape, owner);
 }

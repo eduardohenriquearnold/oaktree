@@ -34,7 +34,8 @@ eye = np.array([-1.5, 1.5, -1.5])
 pose = look_at(eye, np.zeros(3), np.array([0, -1, 0]))
 
 rendered = node.render(K, pose, image_hw)
-rendered = rendered.reshape(image_hw[0], image_hw[1], 4)
+print(type(rendered))
+# rendered = rendered.reshape(image_hw[0], image_hw[1], 4)
 print(rendered.shape)
 
 rgb = Image.fromarray(np.uint8(rendered[..., :3] * 255))

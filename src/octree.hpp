@@ -16,6 +16,29 @@ using doubleX = Eigen::VectorXf;
 
 #include "io.hpp"
 
+class ImageTensor
+{
+    public:
+        ImageTensor(uint height_, uint width_, uint channels_): height(height_), width(width_), channels(channels_), pixels(height_ * width_ * channels_, 0){};
+        ImageTensor(const ImageTensor& other):  height(other.height), width(other.width), channels(other.channels), pixels(other.pixels){};
+        ImageTensor(){};
+        float& operator()(uint i, uint j, uint k)
+        {
+            return pixels[i * channels * width + j * channels + k];
+        };
+        ImageTensor& operator=(const ImageTensor& other)
+        {
+            height = other.height;
+            width = other.width;
+            channels = other.channels;
+            pixels = other.pixels;
+            return *this;
+        };
+
+        std::vector<float> pixels;
+        uint height, width, channels;
+};
+
 
 class OctreeNode
 {
@@ -27,7 +50,7 @@ public:
 
     void stats() const;
     void test() const;
-    doubleX render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
+    ImageTensor render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
     template<class Archive> void serialize(Archive &ar){ar(vert0, vert1, points, points_rgb, children);};
     void save(std::filesystem::path path);
 
