@@ -14,7 +14,7 @@ namespace detail
     template <>
     struct type_caster<ImageTensor> 
     {
-        using NDArray = nb::ndarray<uint8_t, nb::shape<nb::any, nb::any, nb::any>, nb::c_contig, nb::device::cpu>;
+        using NDArray = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any>, nb::c_contig, nb::device::cpu>;
         using NDArrayCaster = make_caster<NDArray>;
 
         // NB_TYPE_CASTER(ImageTensor, NDArrayCaster::Name);
@@ -24,11 +24,11 @@ namespace detail
         static handle from_cpp(const ImageTensor &t, rv_policy policy, cleanup_list *cleanup) noexcept {
             ImageTensor *image = new ImageTensor(t);
             capsule owner(image, [](void *p) noexcept {
-                delete[] (ImageTensor *) p;
+                delete (ImageTensor *) p;
             });
 
             size_t shape[3] = {image->height, image->width, image->channels};
-            return NDArrayCaster::from_cpp(NDArray(image->pixels.data(), 3, shape, owner), policy, cleanup);
+            return NDArrayCaster::from_cpp(NDArray(image->pixels.data(), 3, shape, owner), rv_policy::reference, cleanup);
         };
 
         /// Generating an expression template from a Python object is, of course, not possible
