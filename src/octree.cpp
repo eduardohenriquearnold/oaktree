@@ -201,7 +201,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         }
         if (best_idx != -1)
         {
-            double3 rgb;
+            double3 rgb = double3::Zero();
             if (!current->points_rgb.empty())
                 rgb = current->points_rgb[best_idx];
             return std::make_pair(shortest_ray_distance, rgb);

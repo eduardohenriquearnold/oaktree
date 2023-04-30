@@ -22,26 +22,51 @@ def look_at(eye, center, up):
     mat[:3, 3] = eye
     return mat
 
+SAVE_PATH = Path("octree.bin")
 
-path = Path("octree.bin")
-node = Node(path=path)
-node.stats()
-node.test()
+def load_octree_and_render():
+    node = Node(path=SAVE_PATH)
+    node.stats()
+    node.test()
 
-image_hw = (720, 540)
-K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
-eye = np.array([-1.5, 1.5, -1.5])
-pose = look_at(eye, np.zeros(3), np.array([0, -1, 0]))
+    image_hw = (720, 540)
+    K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
+    eye = np.array([-1.5, 1.5, -1.5])
+    pose = look_at(eye, np.zeros(3), np.array([0, -1, 0]))
 
-rendered = node.render(K=K, cam2world=pose, image_hw=image_hw)
-print(type(rendered))
-print(rendered.shape)
-print(rendered.dtype)
+    rendered = node.render(K=K, cam2world=pose, image_hw=image_hw)
+    print(type(rendered))
+    print(rendered.shape)
+    print(rendered.dtype)
 
-rgb = Image.fromarray(np.uint8(rendered[..., :3] * 255))
-depth = rendered[..., 3]
-normalised_depth = (depth - depth.min()) / (depth.max() - depth.min())
-normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth)*255))
+    rgb = Image.fromarray(np.uint8(rendered[..., :3] * 255))
+    depth = rendered[..., 3]
+    normalised_depth = (depth - depth.min()) / (depth.max() - depth.min())
+    normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth)*255))
 
-rgb.save("py_rgb.jpg")
-normalised_depth.save("py_depth.png")
+    rgb.save("py_rgb.jpg")
+    normalised_depth.save("py_depth.png")
+
+def create_octree_and_save():
+    NUM_POINTS = 1000000
+    length = (3, 0.5, 1)
+    MAX_POINTS_PER_NODE = 100
+
+    # create cuboid by sampling uniform points
+    points = np.random.uniform(-0.5, 0.5, size=(NUM_POINTS, 3)).astype(np.float64)
+    points *= np.array(length)[None]
+
+    # create RGB
+    points_rgb = points.copy()
+    points_rgb /= np.linalg.norm(points_rgb, axis=1, keepdims=True)
+    points_rgb = (points_rgb + 1) / 2
+
+    # create octree
+    node = Node(max_points_per_node=MAX_POINTS_PER_NODE, points=points, points_rgb=points_rgb)
+    # uncomment following line to not provide color (empty RGB image, can still provide depth mask)
+    # node = Node(max_points_per_node=MAX_POINTS_PER_NODE, points=points)
+    node.save(path=SAVE_PATH)
+
+if __name__ == "__main__":
+    create_octree_and_save()
+    load_octree_and_render()

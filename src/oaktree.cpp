@@ -39,7 +39,7 @@ namespace detail
 
 NB_MODULE(oaktree, m) {
     nb::class_<OctreeNode>(m, "Node")
-        .def(nb::init<unsigned int, const doubleX3 &, const doubleX3 &>(), "max_points_per_node"_a, "points"_a, "points_rgb"_a, "Builds Octree from 3D points (optionally RGB values)")
+        .def(nb::init<unsigned int, const doubleX3 &, const doubleX3 &>(), "max_points_per_node"_a, "points"_a, "points_rgb"_a= Eigen::MatrixX3d(), "Builds Octree from 3D points with optional RGB values")
         .def(nb::init<std::filesystem::path>(), "path"_a, "Loads saved Octree")
         .def("save", &OctreeNode::save, "path"_a, "Saves Octree into file")
         .def("test", &OctreeNode::test, "Test all points are within node bounds")
