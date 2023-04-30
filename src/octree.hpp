@@ -50,7 +50,7 @@ public:
 
     void stats() const;
     void test() const;
-    ImageTensor render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw);
+    ImageTensor render(const double3x3 &K, const double4x4 &cam2world, std::pair<int, int> image_hw, uint pixel_dilation=4);
     template<class Archive> void serialize(Archive &ar){ar(vert0, vert1, points, points_rgb, children);};
     void save(std::filesystem::path path);
 

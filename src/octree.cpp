@@ -221,7 +221,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
 
 // Returns flattened RGBD image array (row major).
 // Original shape is (H, W, 4), where (:, :, :3) is RGB and (3, :, 3) is depth.
-ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw)
+ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation)
 {
     // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (4, H, W), row-major
     // doubleX image(4 * image_hw.first * image_hw.second);
@@ -230,7 +230,6 @@ ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, s
 
     // Compute radius pixel
     double3x3 Kinv = K.inverse();
-    const int pixel_dilation = 4;
     double radius_pixel = pixel_dilation * (Kinv * double3(0.5, 0.5, 0)).norm();
 
     // Get origin and rotation matrix (cam2world)

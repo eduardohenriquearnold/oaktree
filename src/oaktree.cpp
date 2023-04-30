@@ -44,5 +44,5 @@ NB_MODULE(oaktree, m) {
         .def("save", &OctreeNode::save, "path"_a, "Saves Octree into file")
         .def("test", &OctreeNode::test, "Test all points are within node bounds")
         .def("stats", &OctreeNode::stats, "Report Octree statistics")
-        .def("render", &OctreeNode::render, "K"_a, "cam2world"_a, "image_hw"_a, "Render point cloud");
+        .def("render", &OctreeNode::render, "K"_a, "cam2world"_a, "image_hw"_a, "pixel_dilation"_a=4, "Render point cloud");
 }

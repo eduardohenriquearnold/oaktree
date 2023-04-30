@@ -42,7 +42,7 @@ cd build
 
 - [x] Replace linalg.h with Eigen
 - [x] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
-- [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
+- [x] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [ ] Make all dependencies submodules (Cereal, Eigen)
 - [x] Create rectangle example in Python land
 - [ ] Test render in large scene (python-land)
