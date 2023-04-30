@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 from matplotlib import cm
 
-import oaktree
+from oaktree import Node
 
 def look_at(eye, center, up):
     z = (center - eye)
@@ -24,7 +24,7 @@ def look_at(eye, center, up):
 
 
 path = Path("octree.bin")
-node = oaktree.node(path)
+node = Node(path=path)
 node.stats()
 node.test()
 
@@ -33,7 +33,7 @@ K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
 eye = np.array([-1.5, 1.5, -1.5])
 pose = look_at(eye, np.zeros(3), np.array([0, -1, 0]))
 
-rendered = node.render(K, pose, image_hw)
+rendered = node.render(K=K, cam2world=pose, image_hw=image_hw)
 print(type(rendered))
 print(rendered.shape)
 print(rendered.dtype)

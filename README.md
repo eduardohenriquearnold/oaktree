@@ -44,7 +44,7 @@ cd build
 - [x] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
 - [ ] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [ ] Make all dependencies submodules (Cereal, Eigen)
-- [ ] Create rectangle example in Python land
+- [x] Create rectangle example in Python land
 - [ ] Test render in large scene (python-land)
 - [ ] Fix black line artifacts near node edges
 - [ ] Create Pypi package

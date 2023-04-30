@@ -6,6 +6,7 @@
 #include <nanobind/eigen/dense.h>
 
 namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace nanobind
 {
@@ -17,7 +18,6 @@ namespace detail
         using NDArray = nb::ndarray<nb::numpy, float, nb::shape<nb::any, nb::any, nb::any>, nb::c_contig, nb::device::cpu>;
         using NDArrayCaster = make_caster<NDArray>;
 
-        // NB_TYPE_CASTER(ImageTensor, NDArrayCaster::Name);
         static constexpr auto Name = NDArrayCaster::Name;
         template <typename T_> using Cast = ImageTensor;
 
@@ -31,7 +31,6 @@ namespace detail
             return NDArrayCaster::from_cpp(NDArray(image->pixels.data(), 3, shape, owner), rv_policy::reference, cleanup);
         };
 
-        /// Generating an expression template from a Python object is, of course, not possible
         bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept = delete;
 
     };
@@ -39,11 +38,11 @@ namespace detail
 }
 
 NB_MODULE(oaktree, m) {
-    nb::class_<OctreeNode>(m, "node")
-        .def(nb::init<unsigned int, const doubleX3 &, const doubleX3 &>())
-        .def(nb::init<std::filesystem::path>())
-        .def("save", &OctreeNode::save)
-        .def("test", &OctreeNode::test)
-        .def("stats", &OctreeNode::stats)
-        .def("render", &OctreeNode::render);
+    nb::class_<OctreeNode>(m, "Node")
+        .def(nb::init<unsigned int, const doubleX3 &, const doubleX3 &>(), "max_points_per_node"_a, "points"_a, "points_rgb"_a, "Builds Octree from 3D points (optionally RGB values)")
+        .def(nb::init<std::filesystem::path>(), "path"_a, "Loads saved Octree")
+        .def("save", &OctreeNode::save, "path"_a, "Saves Octree into file")
+        .def("test", &OctreeNode::test, "Test all points are within node bounds")
+        .def("stats", &OctreeNode::stats, "Report Octree statistics")
+        .def("render", &OctreeNode::render, "K"_a, "cam2world"_a, "image_hw"_a, "Render point cloud");
 }
