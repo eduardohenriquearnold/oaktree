@@ -11,7 +11,6 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 find_package(OpenMP REQUIRED)
-find_package (Eigen3 3.4 REQUIRED NO_MODULE)
 find_package(Python 3.9 COMPONENTS Interpreter Development.Module REQUIRED)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind)
@@ -23,7 +22,7 @@ nanobind_add_module(oaktree "src/oaktree.cpp")
 set_target_properties(octree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(io PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(octree PRIVATE OpenMP::OpenMP_CXX Eigen3::Eigen)
-target_link_libraries(demo PUBLIC octree io Eigen3::Eigen)
+target_link_libraries(octree PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(demo PUBLIC octree io)
 target_link_libraries(oaktree PRIVATE octree io)
-include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external")
+include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external" "${PROJECT_SOURCE_DIR}/external/eigen" "${PROJECT_SOURCE_DIR}/external/cereal/include")

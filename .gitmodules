@@ -1,3 +1,9 @@
 [submodule "external/nanobind"]
 	path = external/nanobind
-	url = https://github.com/wjakob/nanobind
+	url = https://github.com/wjakob/nanobind.git
+[submodule "external/cereal"]
+	path = external/cereal
+	url = https://github.com/USCiLab/cereal.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = git@gitlab.com:libeigen/eigen.git
