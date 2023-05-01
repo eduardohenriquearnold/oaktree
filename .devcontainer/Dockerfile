@@ -7,13 +7,6 @@ COPY ./reinstall-cmake.sh /tmp/
 
 RUN sudo apt install libpython3-dev
 
-RUN cd /opt/ && \
-    git clone --branch 3.4 --depth 1 https://gitlab.com/libeigen/eigen.git && \
-    mkdir -p eigen/build_dir && \
-    cd eigen/build_dir && \
-    cmake .. && \
-    sudo make install
-
 RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
         chmod +x /tmp/reinstall-cmake.sh && /tmp/reinstall-cmake.sh ${REINSTALL_CMAKE_VERSION_FROM_SOURCE}; \
     fi \
