@@ -5,7 +5,7 @@ ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="none"
 # Optionally install the cmake for vcpkg
 COPY ./reinstall-cmake.sh /tmp/
 
-RUN sudo apt install libpython3-dev
+RUN sudo apt update -y && sudo apt install -y libpython3-dev
 
 RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
         chmod +x /tmp/reinstall-cmake.sh && /tmp/reinstall-cmake.sh ${REINSTALL_CMAKE_VERSION_FROM_SOURCE}; \
