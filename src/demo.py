@@ -68,5 +68,5 @@ def create_octree_and_save():
     node.save(path=SAVE_PATH)
 
 if __name__ == "__main__":
-    # create_octree_and_save()
+    create_octree_and_save()
     load_octree_and_render()
