@@ -1,6 +1,6 @@
 #pragma once
 #include <random>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include <cereal/cereal.hpp>
 #include <cereal/archives/binary.hpp>

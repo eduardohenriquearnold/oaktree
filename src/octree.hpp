@@ -7,7 +7,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 using double3 = Eigen::Vector3d;
 using double3x3 = Eigen::Matrix<double, 3, 3>;
 using double4x4 = Eigen::Matrix<double, 4, 4>;
