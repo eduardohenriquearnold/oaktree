@@ -3,6 +3,7 @@ sys.path.append("/workspaces/octree/build")
 
 from pathlib import Path
 import numpy as np
+import pandas as pd
 from PIL import Image
 from matplotlib import cm
 
@@ -31,10 +32,12 @@ def load_octree_and_render():
 
     image_hw = (720, 540)
     K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
-    eye = np.array([-1.5, 1.5, -1.5])
-    pose = look_at(eye, np.zeros(3), np.array([0, -1, 0]))
+    eye = np.array([-5.5, 10.5, 1.5])
+    eye = np.array([-8.5, 7.5, 2.5])
+    center = np.zeros(3)
+    pose = look_at(eye=eye, center=center, up=np.array([0, 0, 1]))
 
-    rendered = node.render(K=K, cam2world=pose, image_hw=image_hw)
+    rendered = node.render(K=K, cam2world=pose, image_hw=image_hw, pixel_dilation=5)
     print(type(rendered))
     print(rendered.shape)
     print(rendered.dtype)
@@ -47,7 +50,7 @@ def load_octree_and_render():
     rgb.save("py_rgb.jpg")
     normalised_depth.save("py_depth.png")
 
-def create_octree_and_save(color: bool=True):
+def create_octree_box_and_save(color:bool=True):
     NUM_POINTS = 1000000
     LENGTH = (3, 0.5, 1)
     MAX_POINTS_PER_NODE = 100
@@ -68,6 +71,21 @@ def create_octree_and_save(color: bool=True):
     node = Node(max_points_per_node=MAX_POINTS_PER_NODE, points=points, points_rgb=points_rgb)
     node.save(path=SAVE_PATH)
 
+def load_point_cloud(path: Path):
+    pcl = pd.read_csv(path)
+    pcl = pcl.iloc[:, :3].to_numpy().reshape(-1, 3)
+    return pcl
+
+def create_octree_from_data(path: Path):
+    points = load_point_cloud(path)
+    print(f"Loaded point cloud with shape {points.shape}")
+
+    # create octree
+    MAX_POINTS_PER_NODE = 1000
+    node = Node(max_points_per_node=MAX_POINTS_PER_NODE, points=points)
+    node.save(path=SAVE_PATH)
+
 if __name__ == "__main__":
-    create_octree_and_save()
+    # create_octree_box_and_save()
+    create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
     load_octree_and_render()

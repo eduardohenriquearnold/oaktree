@@ -22,7 +22,10 @@ cmake --build .
 ## Test demo
 ```bash
 cd build
+# cpp
 ./demo
+# python
+python3 ../src/demo.py
 ```
 
 ## TODO
@@ -43,8 +46,15 @@ cd build
 - [x] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [x] Make all dependencies submodules (Cereal, Eigen)
 - [x] Create rectangle example in Python land
-- [ ] Test render in large scene (python-land)
 - [ ] Fix black line artifacts near node edges
+    > This happens as node size gets quite small and intersection algorithm fails. 
+    > Can be solved by increasing the size of the box, but the epsilon is arbitrary and may be dependent on distance to camera
+    > Ideally we want the intersection algorithm to handle this, i.e. it should consider nodes for which the CONE intersects, not only the ray
+    > Check cone-box intersection code below:
+    > https://stackoverflow.com/questions/22023977/detect-if-a-cube-and-a-cone-intersect-each-other
+    >  https://blog.squareys.de/aabb-cone-intersection/
+- [ ] Test render in large scene (python-land)
+- [ ] C++ formatter
 - [ ] Create Pypi package
 - [ ] Push publicly to Github
 

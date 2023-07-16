@@ -2,7 +2,7 @@
 
 void OctreeNode::update_vertices()
 {
-    if (points.size() == 0)
+    if (points.size() <= 1)
         return;
 
     double3 min_vert = points[0];
@@ -95,6 +95,7 @@ void OctreeNode::stats() const
     int num_points = 0;
     int num_nodes = 0;
     int max_level = 0;
+    double min_diag = 1e10;
     std::queue<const OctreeNode *> q;
     std::queue<unsigned int> level;
     q.push(this);
@@ -119,9 +120,10 @@ void OctreeNode::stats() const
             q.push(&child);
             level.push(current_level + 1);
         }
+        min_diag = std::min(min_diag, (current->vert1 - current->vert0).norm());
     }
 
-    std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points." << std::endl;
+    std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points. Min diag: " << min_diag << std::endl;
 }
 
 // Test that all leaf nodes have points within their bounds
@@ -219,13 +221,9 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
 }
 
 
-// Returns flattened RGBD image array (row major).
-// Original shape is (H, W, 4), where (:, :, :3) is RGB and (3, :, 3) is depth.
 ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation)
 {
-    // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (4, H, W), row-major
-    // doubleX image(4 * image_hw.first * image_hw.second);
-    // auto idx = [image_hw] (size_t i, size_t j, size_t ch) {return i * 4 * image_hw.second + j * 4 + ch; };
+    // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (H, W, 4), row-major
     ImageTensor image(image_hw.first, image_hw.second, 4);
 
     // Compute radius pixel

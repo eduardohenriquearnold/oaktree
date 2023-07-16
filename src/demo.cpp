@@ -84,8 +84,8 @@ int main()
 
     // set extrinsics/intrinsics
     std::pair<int, int> image_hw = std::make_pair(720, 540);
-    double3 eye(-1.5, 1.5, -1.5);
-    double4x4 pose = lookAt<double3>(eye, double3(0, 0, 0), double3(0,-1,0));
+    double3 eye(-8.5, 7.5, 2.5);
+    double4x4 pose = lookAt<double3>(eye, double3(0, 0, 0), double3(0,0,1));
     double3x3 K;
     K << 500, 0  , 270, 
            0, 500, 360,
