@@ -161,7 +161,7 @@ double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir) c
     double tmin_all = tmin.maxCoeff();
     double tmax_all = tmax.minCoeff();
 
-    if ((tmin_all > tmax.y()) || (tmin.y() > tmax_all) || (tmin_all > tmax.z()) || (tmin.z() > tmax_all))
+    if ((tmax_all < 0.) || (tmin_all > tmax_all))
         return -1;
 
     return tmin_all;
