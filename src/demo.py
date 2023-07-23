@@ -31,13 +31,13 @@ def load_octree_and_render():
     node.test()
 
     image_hw = (720, 540)
-    K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
+    K = np.array([[1800, 0, 270], [0, 1800, 360], [0, 0, 1]])
     eye = np.array([-5.5, 10.5, 1.5])
     eye = np.array([-8.5, 7.5, 2.5])
     center = np.zeros(3)
     pose = look_at(eye=eye, center=center, up=np.array([0, 0, 1]))
 
-    rendered = node.render(K=K, cam2world=pose, image_hw=image_hw, pixel_dilation=5)
+    rendered = node.render(K=K, cam2world=pose, image_hw=image_hw, pixel_dilation=2)
     print(type(rendered))
     print(rendered.shape)
     print(rendered.dtype)
@@ -49,6 +49,11 @@ def load_octree_and_render():
 
     rgb.save("py_rgb.jpg")
     normalised_depth.save("py_depth.png")
+
+    # import matplotlib.pyplot as plt
+    # plt.imshow(depth, cmap='turbo', interpolation='nearest')
+    # plt.colorbar()
+    # plt.savefig("py_colorbar.png")
 
 def create_octree_box_and_save(color:bool=True):
     NUM_POINTS = 1000000
@@ -87,5 +92,5 @@ def create_octree_from_data(path: Path):
 
 if __name__ == "__main__":
     # create_octree_box_and_save()
-    create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
+    # create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
     load_octree_and_render()

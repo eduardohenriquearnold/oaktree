@@ -53,6 +53,9 @@ python3 ../src/demo.py
     > Check cone-box intersection code below:
     > https://stackoverflow.com/questions/22023977/detect-if-a-cube-and-a-cone-intersect-each-other
     >  https://blog.squareys.de/aabb-cone-intersection/
+    > Update 23/07/23: Cone-box intersection helps, but we still see some black dots unless using a very large pixel
+    radius. In contrast, using a large pixel radius results in blocky geometry due to getting all points within each 
+    Octree node, so the node geometry becomes apparent in the depth which is undesirable.
 - [ ] Test render in large scene (python-land)
 - [ ] C++ formatter
 - [ ] Create Pypi package
