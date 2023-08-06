@@ -60,7 +60,7 @@ python3 ../src/demo.py
     > Fixed this bug, but there must be something else wrong, because random black dots still appear
     > Copied exact AABB implementation from ScratchPixel and results are the same (although slower)
 - [x] Test render in large scene (python-land)
-- [ ] C++ formatter
+- [x] C++ formatter
 - [ ] Create Pypi package
 - [ ] Push publicly to Github
 

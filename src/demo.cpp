@@ -10,7 +10,7 @@ struct profiler
 {
     std::string name;
     std::chrono::high_resolution_clock::time_point p;
-    profiler(std::string const &n) :
+    profiler(std::string const& n) :
         name(n), p(std::chrono::high_resolution_clock::now()) { }
     ~profiler()
     {
@@ -24,9 +24,9 @@ struct profiler
 #define PROFILE_BLOCK(pbn) profiler _pfinstance(pbn)
 
 template<typename Derived>
-Eigen::Matrix<typename Derived::Scalar,4,4> lookAt(Derived const & eye, Derived const & center, Derived const & up){
-    typedef Eigen::Matrix<typename Derived::Scalar,4,4> Matrix4;
-    typedef Eigen::Matrix<typename Derived::Scalar,3,1> Vector3;
+Eigen::Matrix<typename Derived::Scalar, 4, 4> lookAt(Derived const& eye, Derived const& center, Derived const& up) {
+    typedef Eigen::Matrix<typename Derived::Scalar, 4, 4> Matrix4;
+    typedef Eigen::Matrix<typename Derived::Scalar, 3, 1> Vector3;
     Vector3 z = (center - eye).normalized();
     Vector3 x = up.cross(z).normalized();
     Vector3 y = z.cross(x);
@@ -44,8 +44,8 @@ std::pair<CImg, CImg> convert_eigen_cimg(ImageTensor& rendered, std::pair<int, i
     CImg depth(image_hw.second, image_hw.first);
     CImg rgb(image_hw.second, image_hw.first, 1, 3);
 
-    for (int i=0; i< image_hw.first; i++)
-        for (int j=0; j< image_hw.second; j++)
+    for (int i = 0; i < image_hw.first; i++)
+        for (int j = 0; j < image_hw.second; j++)
         {
             rgb(j, i, 0) = 255 * rendered(i, j, 0);
             rgb(j, i, 1) = 255 * rendered(i, j, 1);
@@ -66,7 +66,7 @@ int main()
         doubleX3 pcl = random_pointcloud(1000000, double3(3., 0.5, 2.));
         doubleX3 rgb = doubleX3(pcl);
         for (auto color : rgb.rowwise())
-            color = (color.normalized().array() + 1)/2;
+            color = (color.normalized().array() + 1) / 2;
 
         // create and test octree
         OctreeNode root(100, pcl, rgb);
@@ -85,12 +85,12 @@ int main()
     // set extrinsics/intrinsics
     std::pair<int, int> image_hw = std::make_pair(720, 540);
     double3 eye(-8.5, 7.5, 2.5);
-    double4x4 pose = lookAt<double3>(eye, double3(0, 0, 0), double3(0,0,1));
+    double4x4 pose = lookAt<double3>(eye, double3(0, 0, 0), double3(0, 0, 1));
     double3x3 K;
-    K << 500, 0  , 270, 
-           0, 500, 360,
-           0,   0,   1;
-    
+    K << 500, 0, 270,
+        0, 500, 360,
+        0, 0, 1;
+
     // render depth/rgb image
     ImageTensor rendered;
     {
