@@ -56,6 +56,9 @@ python3 ../src/demo.py
     > Update 23/07/23: Cone-box intersection helps, but we still see some black dots unless using a very large pixel
     radius. In contrast, using a large pixel radius results in blocky geometry due to getting all points within each 
     Octree node, so the node geometry becomes apparent in the depth which is undesirable.
+    > Found a bug, when origin was inside node it wasn't detecting colisions (negative tmin)
+    > Fixed this bug, but there must be something else wrong, because random black dots still appear
+    > Copied exact AABB implementation from ScratchPixel and results are the same (although slower)
 - [ ] Test render in large scene (python-land)
 - [ ] C++ formatter
 - [ ] Create Pypi package
