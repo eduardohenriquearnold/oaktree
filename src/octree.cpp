@@ -35,9 +35,6 @@ std::vector<double3> OctreeNode::get_vertices() const
 
 void OctreeNode::split(unsigned int max_points_per_node)
 {
-    // Set bounds based on current points
-    // update_vertices();
-
     if (points.size() <= max_points_per_node)
         return;
 
@@ -169,7 +166,6 @@ void OctreeNode::test() const
 }
 
 // Return shortest ray-cone distance that intersects node, return -1 if no intersection
-// First try to intersect principal ray, if it doesn't intersect, approximates ray-cone intersection
 double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir, const double &radius_pixel) const
 {
     // Based on https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
@@ -182,10 +178,11 @@ double OctreeNode::ray_intersection(const double3 &origin, const double3 &dir, c
     double tmin_all = tmin.maxCoeff();
     double tmax_all = tmax.minCoeff();
 
-    // Principal ray does not intersect, we try to check for cone intersection
+    // Principal ray does not intersect, return -1.
     if ((tmax_all < 0.) || (tmin_all > tmax_all))
         return -1;
 
+    // If tmin is negative we're inside the node, return small positive value (negative values indicate no intersection)
     if (tmin_all < 0)
         return 1e-5;
 
@@ -210,7 +207,6 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
     while(!node_queue.empty())
     {
         const OctreeNode *current = node_queue.top().second;
-        // std::cout << "DEBUG. Current node ("<< current <<") distance is " << node_queue.top().first << " #pts " << current->points.size() << " #children " << current->children.size() << std::endl;
         node_queue.pop();
 
         // Check if points fall within cone, return closest one along ray
@@ -220,7 +216,6 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
             double distance_along_ray = point.dot(dir);
             double radius_point = (point - distance_along_ray * dir).norm();
             double radius_cone = radius_pixel * distance_along_ray;
-            // std::cout << "Radius threshold  " << radius_cone << " . Point radius " << radius_point << std::endl;
             if (radius_point <= radius_cone && distance_along_ray < shortest_ray_distance)
             {
                 shortest_ray_distance = distance_along_ray;
@@ -232,7 +227,6 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
             double3 rgb = double3::Zero();
             if (!current->points_rgb.empty())
                 rgb = current->points_rgb[best_idx];
-            // std::cout << "DEBUG. Node ("<< current <<") Found point with depth " << shortest_ray_distance <<  std::endl;
             return std::make_pair(shortest_ray_distance, rgb);
         }
 
@@ -245,7 +239,6 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3 &origin, const dou
         }
     }
 
-        // std::cout << "DEBUG. No points found, returing -1 depth " << std::endl;
     return std::make_pair(-1, double3::Zero());
 }
 
@@ -268,10 +261,6 @@ ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, s
     for (int i=0; i<image_hw.first; i++)
         for (int j=0; j<image_hw.second; j++)
         {
-            // if (!((i == 22) && ((j==460) || (j==461))))
-            // if (!((i == 303) && ((j==474) || (j==475))))
-                // continue;
-            // std::cout << "i=" << i << " j=" << j << std::endl;
             double3 uv_hom(j+0.5, i+0.5, 1);
             double3 unproj = Kinv * uv_hom;
             double3 ray_world = (rotmat * unproj).normalized();

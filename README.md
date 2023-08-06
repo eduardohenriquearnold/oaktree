@@ -46,7 +46,7 @@ python3 ../src/demo.py
 - [x] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
 - [x] Make all dependencies submodules (Cereal, Eigen)
 - [x] Create rectangle example in Python land
-- [ ] Fix black line artifacts near node edges
+- [x] Fix black line artifacts near node edges
     > This happens as node size gets quite small and intersection algorithm fails. 
     > Can be solved by increasing the size of the box, but the epsilon is arbitrary and may be dependent on distance to camera
     > Ideally we want the intersection algorithm to handle this, i.e. it should consider nodes for which the CONE intersects, not only the ray
@@ -59,7 +59,7 @@ python3 ../src/demo.py
     > Found a bug, when origin was inside node it wasn't detecting colisions (negative tmin)
     > Fixed this bug, but there must be something else wrong, because random black dots still appear
     > Copied exact AABB implementation from ScratchPixel and results are the same (although slower)
-- [ ] Test render in large scene (python-land)
+- [x] Test render in large scene (python-land)
 - [ ] C++ formatter
 - [ ] Create Pypi package
 - [ ] Push publicly to Github
