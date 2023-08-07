@@ -40,17 +40,13 @@ find_package(Python 3.9
   OPTIONAL_COMPONENTS Development.SABIModule)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/nanobind)
-add_library(octree "src/octree.cpp")
-add_library(io "src/io.cpp")
-add_executable(demo "src/demo.cpp")
+add_library(node "src/node.cpp")
 nanobind_add_module(_oaktree STABLE_ABI "src/oaktree.cpp")
 
-set_target_properties(octree PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(io PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(node PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(octree PRIVATE OpenMP::OpenMP_CXX)
-target_link_libraries(demo PUBLIC octree io)
-target_link_libraries(_oaktree PRIVATE octree io)
+target_link_libraries(node PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(_oaktree PRIVATE node)
 include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/external" "${PROJECT_SOURCE_DIR}/external/eigen" "${PROJECT_SOURCE_DIR}/external/cereal/include")
 
 install(TARGETS _oaktree LIBRARY DESTINATION oaktree)

@@ -16,36 +16,13 @@ using doubleX = Eigen::VectorXf;
 
 #include "io.hpp"
 
-class ImageTensor
+class Node
 {
 public:
-    ImageTensor(uint height_, uint width_, uint channels_) : height(height_), width(width_), channels(channels_), pixels(height_* width_* channels_, 0) {};
-    ImageTensor(const ImageTensor& other) : height(other.height), width(other.width), channels(other.channels), pixels(other.pixels) {};
-    ImageTensor() {};
-    float& operator()(uint i, uint j, uint k)
-    {
-        return pixels[i * channels * width + j * channels + k];
-    };
-    ImageTensor& operator=(const ImageTensor& other)
-    {
-        height = other.height;
-        width = other.width;
-        channels = other.channels;
-        pixels = other.pixels;
-        return *this;
-    };
-
-    std::vector<float> pixels;
-    uint height, width, channels;
-};
-
-class OctreeNode
-{
-public:
-    OctreeNode() {};
-    OctreeNode(std::filesystem::path path);
-    OctreeNode(double3 v0, double3 v1) : vert0(v0), vert1(v1) {};
-    OctreeNode(unsigned int max_points_per_node, const doubleX3& given_points, const doubleX3& given_points_rgb = doubleX3());
+    Node() {};
+    Node(std::filesystem::path path);
+    Node(double3 v0, double3 v1) : vert0(v0), vert1(v1) {};
+    Node(unsigned int max_points_per_node, const doubleX3& given_points, const doubleX3& given_points_rgb = doubleX3());
 
     void stats() const;
     void test() const;
@@ -64,7 +41,7 @@ private:
     std::vector<double3> points_rgb;
 
     // Children (used only for non-leaf nodes)
-    std::vector<OctreeNode> children;
+    std::vector<Node> children;
 
     void update_vertices();
     std::vector<double3> get_vertices() const;

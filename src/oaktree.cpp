@@ -1,4 +1,4 @@
-#include "octree.hpp"
+#include "node.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/filesystem.h>
@@ -38,11 +38,11 @@ namespace nanobind
 }
 
 NB_MODULE(_oaktree, m) {
-    nb::class_<OctreeNode>(m, "Node")
+    nb::class_<Node>(m, "Node")
         .def(nb::init<unsigned int, const doubleX3&, const doubleX3&>(), "max_points_per_node"_a, "points"_a, "points_rgb"_a = Eigen::MatrixX3d(), "Builds Octree from 3D points with optional RGB values")
         .def(nb::init<std::filesystem::path>(), "path"_a, "Loads saved Octree")
-        .def("save", &OctreeNode::save, "path"_a, "Saves Octree into file")
-        .def("test", &OctreeNode::test, "Test all points are within node bounds")
-        .def("stats", &OctreeNode::stats, "Report Octree statistics")
-        .def("render", &OctreeNode::render, "K"_a, "cam2world"_a, "image_hw"_a, "pixel_dilation"_a = 4, "Render point cloud");
+        .def("save", &Node::save, "path"_a, "Saves Octree into file")
+        .def("test", &Node::test, "Test all points are within node bounds")
+        .def("stats", &Node::stats, "Report Octree statistics")
+        .def("render", &Node::render, "K"_a, "cam2world"_a, "image_hw"_a, "pixel_dilation"_a = 4, "Render point cloud");
 }

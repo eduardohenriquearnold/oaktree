@@ -1,6 +1,6 @@
-#include "octree.hpp"
+#include "node.hpp"
 
-void OctreeNode::update_vertices()
+void Node::update_vertices()
 {
     if (points.size() <= 1)
         return;
@@ -17,7 +17,7 @@ void OctreeNode::update_vertices()
     vert1 = max_vert;
 }
 
-std::vector<double3> OctreeNode::get_vertices() const
+std::vector<double3> Node::get_vertices() const
 {
     std::vector<double3> vertices;
     double3 half_size = 0.5 * (vert1 - vert0);
@@ -33,7 +33,7 @@ std::vector<double3> OctreeNode::get_vertices() const
     return vertices;
 }
 
-void OctreeNode::split(unsigned int max_points_per_node)
+void Node::split(unsigned int max_points_per_node)
 {
     if (points.size() <= max_points_per_node)
         return;
@@ -47,7 +47,7 @@ void OctreeNode::split(unsigned int max_points_per_node)
         int z = (i / 4) % 2;
         double3 v0 = double3(x, y, z).cwiseProduct(half_size) + vert0;
         double3 v1 = vert1 - double3(1 - x, 1 - y, 1 - z).cwiseProduct(half_size);
-        children.push_back(OctreeNode(v0, v1));
+        children.push_back(Node(v0, v1));
     }
 
     // Distribute points into children
@@ -65,15 +65,15 @@ void OctreeNode::split(unsigned int max_points_per_node)
     points_rgb.clear();
 
     // Prune children without points
-    children.erase(std::remove_if(children.begin(), children.end(), [](OctreeNode& child) {return child.points.empty();}), children.end());
+    children.erase(std::remove_if(children.begin(), children.end(), [](Node& child) {return child.points.empty();}), children.end());
 
     // Recursively split children points
 #pragma omp parallel for schedule(dynamic,1)
-    for (OctreeNode& child : children)
+    for (Node& child : children)
         child.split(max_points_per_node);
 }
 
-OctreeNode::OctreeNode(unsigned int max_points_per_node, const doubleX3& given_points, const doubleX3& given_points_rgb)
+Node::Node(unsigned int max_points_per_node, const doubleX3& given_points, const doubleX3& given_points_rgb)
 {
     if (given_points_rgb.rows() && (given_points.rows() != given_points_rgb.rows()))
         throw std::range_error("Expected points_rgb to be empty or match points size");
@@ -88,14 +88,14 @@ OctreeNode::OctreeNode(unsigned int max_points_per_node, const doubleX3& given_p
     split(max_points_per_node);
 }
 
-OctreeNode::OctreeNode(std::filesystem::path path)
+Node::Node(std::filesystem::path path)
 {
     std::ifstream input_stream(path, std::ios::binary);
     cereal::BinaryInputArchive archive(input_stream);
     archive(*this);
 }
 
-void OctreeNode::save(std::filesystem::path path)
+void Node::save(std::filesystem::path path)
 {
     std::ofstream output_stream(path, std::ios::binary);
     cereal::BinaryOutputArchive archive(output_stream);
@@ -104,18 +104,18 @@ void OctreeNode::save(std::filesystem::path path)
 }
 
 // Show stats of the Octree
-void OctreeNode::stats() const
+void Node::stats() const
 {
     int num_points = 0;
     int num_nodes = 0;
     int max_level = 0;
     double min_diag = 1e10;
-    std::queue<const OctreeNode*> q;
+    std::queue<const Node*> q;
     std::queue<unsigned int> level;
     q.push(this);
     level.push(0);
 
-    const OctreeNode* current;
+    const Node* current;
     unsigned int current_level;
     while (!q.empty())
     {
@@ -129,7 +129,7 @@ void OctreeNode::stats() const
         if (current_level > max_level)
             max_level = current_level;
 
-        for (const OctreeNode& child : current->children)
+        for (const Node& child : current->children)
         {
             q.push(&child);
             level.push(current_level + 1);
@@ -141,12 +141,12 @@ void OctreeNode::stats() const
 }
 
 // Test that all leaf nodes have points within their bounds
-void OctreeNode::test() const
+void Node::test() const
 {
-    std::queue<const OctreeNode*> q;
+    std::queue<const Node*> q;
     q.push(this);
 
-    const OctreeNode* current;
+    const Node* current;
     while (!q.empty())
     {
         current = q.front();
@@ -155,7 +155,7 @@ void OctreeNode::test() const
         if (current->points.empty() == current->children.empty())
             throw std::logic_error("Node must either have children or have points!");
 
-        for (const OctreeNode& child : current->children)
+        for (const Node& child : current->children)
             q.push(&child);
 
         for (const double3& pt : current->points)
@@ -166,7 +166,7 @@ void OctreeNode::test() const
 }
 
 // Return shortest ray-cone distance that intersects node, return -1 if no intersection
-double OctreeNode::ray_intersection(const double3& origin, const double3& dir, const double& radius_pixel) const
+double Node::ray_intersection(const double3& origin, const double3& dir, const double& radius_pixel) const
 {
     // Based on https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
     double3 tvert0 = (vert0 - origin).cwiseQuotient(dir);
@@ -194,10 +194,10 @@ double OctreeNode::ray_intersection(const double3& origin, const double3& dir, c
 // - double t: distance to point, along the ray. -1 if no intersection
 // - double3 point_rgb: rgb of selected point. (0, 0, 0) if no intersection
 // Assumes dir (direction) has unit length
-std::pair<double, double3> OctreeNode::ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const
+std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const
 {
     // Priority queue contains octree nodes to visit next (ordered ascending from ray intersection distance)
-    using queue_type = std::pair<double, const OctreeNode*>;
+    using queue_type = std::pair<double, const Node*>;
     std::priority_queue<queue_type, std::vector<queue_type>, std::greater<queue_type>> node_queue;
     node_queue.push(std::make_pair(0, this));
 
@@ -206,7 +206,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3& origin, const dou
 
     while (!node_queue.empty())
     {
-        const OctreeNode* current = node_queue.top().second;
+        const Node* current = node_queue.top().second;
         node_queue.pop();
 
         // Check if points fall within cone, return closest one along ray
@@ -231,7 +231,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3& origin, const dou
         }
 
         // Add children which intersect rays to the queue (ordered by who intersects first)
-        for (const OctreeNode& child : current->children)
+        for (const Node& child : current->children)
         {
             double t = child.ray_intersection(origin, dir, radius_pixel);
             if (t > 0)
@@ -243,7 +243,7 @@ std::pair<double, double3> OctreeNode::ray_cast(const double3& origin, const dou
 }
 
 
-ImageTensor OctreeNode::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation)
+ImageTensor Node::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation)
 {
     // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (H, W, 4), row-major
     ImageTensor image(image_hw.first, image_hw.second, 4);

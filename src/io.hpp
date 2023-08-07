@@ -6,9 +6,6 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 
-Eigen::MatrixX3d random_pointcloud(unsigned int num_points, Eigen::Vector3d length);
-Eigen::MatrixX3d random_pointcloud(unsigned int num_points, double length);
-
 namespace cereal
 {
   template <class Archive, class _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols> inline
@@ -36,3 +33,26 @@ namespace cereal
     ar(binary_data(m.data(), static_cast<std::size_t>(rows * cols * sizeof(_Scalar))));
   }
 }
+
+class ImageTensor
+{
+public:
+  ImageTensor(uint height_, uint width_, uint channels_) : height(height_), width(width_), channels(channels_), pixels(height_* width_* channels_, 0) {};
+  ImageTensor(const ImageTensor& other) : height(other.height), width(other.width), channels(other.channels), pixels(other.pixels) {};
+  ImageTensor() {};
+  float& operator()(uint i, uint j, uint k)
+  {
+    return pixels[i * channels * width + j * channels + k];
+  };
+  ImageTensor& operator=(const ImageTensor& other)
+  {
+    height = other.height;
+    width = other.width;
+    channels = other.channels;
+    pixels = other.pixels;
+    return *this;
+  };
+
+  std::vector<float> pixels;
+  uint height, width, channels;
+};
