@@ -1,26 +1,16 @@
 # OakTree
 Render large point clouds efficiently using Octrees.
 
-## Dependencies
-
-All dependencies are included in submodules inside `external`.
-
-Make sure to download them by using
-```shell
-git clone https://github.com/eduardohenriquearnold/octree.git
-git submodule update --init --recursive
-```
-
 ## Build
 ```bash
+git clone --recursive https://github.com/eduardohenriquearnold/oaktree.git
 cd oaktree
 pip install .
 ```
 
 ## Test demo
 ```bash
-cd sample
-python demo.py
+python sample/demo.py
 ```
 
 ## TODO
@@ -57,8 +47,8 @@ python demo.py
 - [x] Test render in large scene (python-land)
 - [x] C++ formatter
 - [x] Set up pip-based install
-- [ ] Create Pypi package
 - [ ] C++ unit test
+- [ ] Create Pypi package
 - [ ] Push publicly to Github
 
 ## Sample data
