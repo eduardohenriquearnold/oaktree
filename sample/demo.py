@@ -1,6 +1,3 @@
-import sys
-sys.path.append("/workspaces/octree/build")
-
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -115,6 +112,6 @@ def test_pixel_cone():
 
 if __name__ == "__main__":
     # create_octree_box_and_save()
-    # create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
+    create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
     load_octree_and_render()
     # test_pixel_cone()

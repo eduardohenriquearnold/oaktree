@@ -13,19 +13,14 @@ git submodule update --init --recursive
 
 ## Build
 ```bash
-mkdir build
-cd build
-cmake ..
-cmake --build .
+cd oaktree
+pip install .
 ```
 
 ## Test demo
 ```bash
-cd build
-# cpp
-./demo
-# python
-python3 ../src/demo.py
+cd sample
+python demo.py
 ```
 
 ## TODO
@@ -61,7 +56,9 @@ python3 ../src/demo.py
     > Copied exact AABB implementation from ScratchPixel and results are the same (although slower)
 - [x] Test render in large scene (python-land)
 - [x] C++ formatter
+- [x] Set up pip-based install
 - [ ] Create Pypi package
+- [ ] C++ unit test
 - [ ] Push publicly to Github
 
 ## Sample data
