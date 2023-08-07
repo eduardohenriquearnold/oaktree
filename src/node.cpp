@@ -17,22 +17,6 @@ void Node::update_vertices()
     vert1 = max_vert;
 }
 
-std::vector<double3> Node::get_vertices() const
-{
-    std::vector<double3> vertices;
-    double3 half_size = 0.5 * (vert1 - vert0);
-    double3 center = 0.5 * (vert1 + vert0);
-    for (int i = 0; i < 8; i++)
-    {
-        int x = i % 2;
-        int y = (i / 2) % 2;
-        int z = (i / 4) % 2;
-        double3 v = double3(x, y, z).cwiseProduct(half_size) + center;
-        vertices.push_back(v);
-    }
-    return vertices;
-}
-
 void Node::split(unsigned int max_points_per_node)
 {
     if (points.size() <= max_points_per_node)
