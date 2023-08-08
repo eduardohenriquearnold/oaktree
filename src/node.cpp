@@ -150,7 +150,7 @@ void Node::test() const
 }
 
 // Return shortest ray-cone distance that intersects node, return -1 if no intersection
-double Node::ray_intersection(const double3& origin, const double3& dir, const double& radius_pixel) const
+double Node::ray_intersection(const double3& origin, const double3& dir) const
 {
     // Based on https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
     double3 tvert0 = (vert0 - origin).cwiseQuotient(dir);
@@ -217,7 +217,7 @@ std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& 
         // Add children which intersect rays to the queue (ordered by who intersects first)
         for (const Node& child : current->children)
         {
-            double t = child.ray_intersection(origin, dir, radius_pixel);
+            double t = child.ray_intersection(origin, dir);
             if (t > 0)
                 node_queue.push(std::make_pair(t, &child));
         }

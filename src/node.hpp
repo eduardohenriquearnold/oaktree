@@ -46,6 +46,6 @@ private:
     void update_vertices();
     std::vector<double3> get_vertices() const;
     void split(unsigned int max_points_per_node);
-    double ray_intersection(const double3& origin, const double3& dir, const double& radius_pixel) const;
+    double ray_intersection(const double3& origin, const double3& dir) const;
     std::pair<double, double3> ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const;
 };
