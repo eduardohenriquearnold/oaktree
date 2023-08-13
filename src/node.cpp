@@ -87,13 +87,13 @@ void Node::save(std::filesystem::path path)
 
 }
 
-// Show stats of the Octree
-void Node::stats() const
+// Return size properties of full as a 3 int tuple containing (total #nodes, total #levels, total #points)
+// Recursively traverses full Octree to get these numbers
+std::tuple<int, int, int> Node::len() const
 {
     int num_points = 0;
     int num_nodes = 0;
     int max_level = 0;
-    double min_diag = 1e10;
     std::queue<const Node*> q;
     std::queue<unsigned int> level;
     q.push(this);
@@ -118,13 +118,13 @@ void Node::stats() const
             q.push(&child);
             level.push(current_level + 1);
         }
-        min_diag = std::min(min_diag, (current->vert1 - current->vert0).norm());
     }
 
-    std::cout << "Octree: " << num_nodes << " nodes. " << max_level << " levels. " << num_points << " points. Min diag: " << min_diag << std::endl;
+    return std::make_tuple(num_nodes, max_level, num_points);
 }
 
 // Test that all leaf nodes have points within their bounds
+// If fails, throw exception
 void Node::test() const
 {
     std::queue<const Node*> q;
@@ -146,7 +146,6 @@ void Node::test() const
             if ((pt[0] < current->vert0[0]) || (pt[0] > current->vert1[0]) || (pt[1] < current->vert0[1]) || (pt[1] > current->vert1[1]) || (pt[2] < current->vert0[2]) || (pt[2] > current->vert1[2]))
                 throw std::logic_error("Found point outside node bounds!");
     }
-    std::cout << "Octree test passed." << std::endl;
 }
 
 // Return shortest ray-cone distance that intersects node, return -1 if no intersection

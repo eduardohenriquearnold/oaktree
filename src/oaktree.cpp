@@ -3,6 +3,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/tuple.h>
 #include <nanobind/eigen/dense.h>
 
 namespace nb = nanobind;
@@ -43,6 +44,6 @@ NB_MODULE(_oaktree, m) {
         .def(nb::init<std::filesystem::path>(), "path"_a, "Loads saved Octree")
         .def("save", &Node::save, "path"_a, "Saves Octree into file")
         .def("test", &Node::test, "Test all points are within node bounds")
-        .def("stats", &Node::stats, "Report Octree statistics")
+        .def("len", &Node::len, "Return tuple with total (#nodes, #levels, #pts)")
         .def("render", &Node::render, "K"_a, "cam2world"_a, "image_hw"_a, "pixel_dilation"_a = 4, "Render point cloud");
 }

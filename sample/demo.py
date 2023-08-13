@@ -24,8 +24,8 @@ SAVE_PATH = Path("octree.bin")
 
 def load_octree_and_render():
     node = Node(path=SAVE_PATH)
-    node.stats()
     node.test()
+    print(node.len())
 
     image_hw = (720, 540)
     K = np.array([[2500, 0, 270], [0, 2500, 360], [0, 0, 1]])
