@@ -252,7 +252,7 @@ ImageTensor Node::render(const double3x3& K, const double4x4& cam2world, std::pa
             image(i, j, 1) = res.second[1];
             image(i, j, 2) = res.second[2];
             // depth is corresponds to distance on Z axis (forward axis), NOT the distance along the ray
-            image(i, j, 3) = res.first * unproj(2);
+            image(i, j, 3) = (res.first > 0 ? res.first * unproj(2) : res.first);
         }
 
     return image;
