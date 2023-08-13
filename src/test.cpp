@@ -95,13 +95,10 @@ void test_render_plane()
     // render
     auto rendered = node.render(K, pose, image_hw, 4);
 
-    // assert all valid pixels have depth one (invalid pixels have depth -1)
+    // assert all pixels have depth one (or very close to that)
     for (int i=0; i<image_hw.first; i++)
         for (int j=0; j<image_hw.second; j++)
-        {
-            double depth = rendered(i, j, 3);
-            assert(isApproximatelyEqual(depth, 1.) || isApproximatelyEqual(depth, -1.));
-        }
+            assert(isApproximatelyEqual(rendered(i, j, 3), 1., 0.03));
 }
 
 

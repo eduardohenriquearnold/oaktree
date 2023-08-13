@@ -1,14 +1,25 @@
 # OakTree
 Render large point clouds efficiently using Octrees.
 
-## Build
+## Build & testing
 ```bash
 git clone --recursive https://github.com/eduardohenriquearnold/oaktree.git
 cd oaktree
 pip install .
 ```
 
-## Test demo
+To check unit tests:
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+ctest
+# or, to see results of individual tests
+./cpp_test
+```
+
+## Demo
 ```bash
 python sample/demo.py
 ```
@@ -47,7 +58,7 @@ python sample/demo.py
 - [x] Test render in large scene (python-land)
 - [x] C++ formatter
 - [x] Set up pip-based install
-- [ ] C++ unit test
+- [x] C++ unit test
 - [ ] Make nice README.md with examples
 - [ ] Create Pypi package
 - [ ] Push publicly to Github

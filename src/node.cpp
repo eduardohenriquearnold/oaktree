@@ -174,7 +174,7 @@ double Node::ray_intersection(const double3& origin, const double3& dir) const
 
 // Cast ray at Octree, finds closest point (along ray direction) that projects to pixel
 // Returns pair:
-// - double t: distance to point, along the ray. -1 if no intersection
+// - double t: distance to point, along the RAY. -1 if no intersection
 // - double3 point_rgb: rgb of selected point. (0, 0, 0) if no intersection
 // Assumes dir (direction) has unit length
 std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const
@@ -245,13 +245,14 @@ ImageTensor Node::render(const double3x3& K, const double4x4& cam2world, std::pa
         for (int j = 0; j < image_hw.second; j++)
         {
             double3 uv_hom(j + 0.5, i + 0.5, 1);
-            double3 unproj = Kinv * uv_hom;
-            double3 ray_world = (rotmat * unproj).normalized();
+            double3 unproj = (Kinv * uv_hom).normalized();
+            double3 ray_world = rotmat * unproj;
             auto res = ray_cast(origin, ray_world, radius_pixel);
             image(i, j, 0) = res.second[0];
             image(i, j, 1) = res.second[1];
             image(i, j, 2) = res.second[2];
-            image(i, j, 3) = res.first;
+            // depth is corresponds to distance on Z axis (forward axis), NOT the distance along the ray
+            image(i, j, 3) = res.first * unproj(2);
         }
 
     return image;
