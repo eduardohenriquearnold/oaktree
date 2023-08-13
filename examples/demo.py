@@ -6,7 +6,10 @@ from matplotlib import cm
 
 from oaktree import Node
 
-def look_at(eye, center, up):
+def look_at(eye, center, up=None):
+    if up is None:
+        up = np.array([0., 0., 1.])
+
     z = (center - eye)
     z /= np.linalg.norm(z)
     x = np.cross(up, z)
@@ -32,7 +35,7 @@ def load_octree_and_render():
     eye = np.array([-5.5, 10.5, 1.5])
     eye = np.array([-8.5, 7.5, 2.5])
     center = np.zeros(3)
-    pose = look_at(eye=eye, center=center, up=np.array([0, 0, 1]))
+    pose = look_at(eye=eye, center=center)
 
     rendered = node.render(K=K, cam2world=pose, image_hw=image_hw, pixel_dilation=3)
     print(type(rendered))
@@ -112,6 +115,6 @@ def test_pixel_cone():
 
 if __name__ == "__main__":
     # create_octree_box_and_save()
-    create_octree_from_data(Path("../sample/data/lecturehall/lecturehall1.pose1.object1.label.csv"))
+    # create_octree_from_data(Path("data/lecturehall/lecturehall1.pose1.object1.label.csv"))
     load_octree_and_render()
     # test_pixel_cone()

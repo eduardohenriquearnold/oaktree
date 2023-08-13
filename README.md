@@ -1,14 +1,52 @@
 # OakTree
-Render large point clouds efficiently using Octrees.
+Render large point clouds efficiently using Octrees. The library is a C++ module with Python bindings for ease of use.
 
-## Build & testing
+## Quick Demo
+Create an Octree from a Numpy array containing points xyz positions and RGB intensities.
+```python
+import numpy as np
+from oaktree import Node
+
+# use random points, but could be any Numpy array with shape [N, 3]
+points = np.random.uniform(size=(100000, 3))
+points_rgb = np.random.uniform(size=(100000, 3))
+
+# create Node that allows efficient querying
+node = Node(max_points_per_node=1000, points=points, points_rgb=points_rgb)
+
+# camera parameters
+image_hw = (640, 480)
+K = np.array([[300, 0, 320], [0, 300, 240], [0, 0, 1]], dtype=np.float64)
+cam2world = np.eye(4)
+
+rgbd = node.render(K=K, cam2world=cam2world, image_hw=image_hw)
+rgb = rgbd[:, :, :3]
+depth = rgbd[:, :, 3]
+```
+
+For more comprehensive examples, including real datasets, check the `examples` folder.
+Note: examples require extra dependencies including `matplotlib, PIL`.
+```bash
+cd examples
+python box.py
+python wurzburg.py
+```
+
+## Installation
+
+### Pypi
+```bash
+pip install oaktree
+```
+
+### Build from source
 ```bash
 git clone --recursive https://github.com/eduardohenriquearnold/oaktree.git
 cd oaktree
 pip install .
 ```
 
-To check unit tests:
+Unit tests can be executed with
 ```bash
 mkdir build
 cd build
@@ -19,46 +57,8 @@ ctest
 ./cpp_test
 ```
 
-## Demo
-```bash
-python sample/demo.py
-```
 
 ## TODO
-
-- [x] Check depth correctness
-- [x] Check render intrinsics with larger resolution
-- [x] Parallelise ray tracing with [OMP](https://bisqwit.iki.fi/story/howto/openmp/)
-- [x] Resize node dimensions to fit only points within it (upon construction)
-- [x] Parallelise octree creation
-- [x] Ensure all works with non-regular input clouds (non-cubic)
-- [x] Ensure correctness for camera within octree
-- [x] Split files and use CMake for build
-- [x] Store points/color within OctreeNode, not indices
-- [x] Extend render function to RGB
-
-- [x] Replace linalg.h with Eigen
-- [x] Serialise Octree with [cereal](https://uscilab.github.io/cereal/)
-- [x] Python bindings with [nanobind](https://github.com/wjakob/nanobind)
-- [x] Make all dependencies submodules (Cereal, Eigen)
-- [x] Create rectangle example in Python land
-- [x] Fix black line artifacts near node edges
-    > This happens as node size gets quite small and intersection algorithm fails. 
-    > Can be solved by increasing the size of the box, but the epsilon is arbitrary and may be dependent on distance to camera
-    > Ideally we want the intersection algorithm to handle this, i.e. it should consider nodes for which the CONE intersects, not only the ray
-    > Check cone-box intersection code below:
-    > https://stackoverflow.com/questions/22023977/detect-if-a-cube-and-a-cone-intersect-each-other
-    >  https://blog.squareys.de/aabb-cone-intersection/
-    > Update 23/07/23: Cone-box intersection helps, but we still see some black dots unless using a very large pixel
-    radius. In contrast, using a large pixel radius results in blocky geometry due to getting all points within each 
-    Octree node, so the node geometry becomes apparent in the depth which is undesirable.
-    > Found a bug, when origin was inside node it wasn't detecting colisions (negative tmin)
-    > Fixed this bug, but there must be something else wrong, because random black dots still appear
-    > Copied exact AABB implementation from ScratchPixel and results are the same (although slower)
-- [x] Test render in large scene (python-land)
-- [x] C++ formatter
-- [x] Set up pip-based install
-- [x] C++ unit test
 - [ ] Make nice README.md with examples
 - [ ] Create Pypi package
 - [ ] Push publicly to Github
