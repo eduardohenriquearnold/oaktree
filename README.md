@@ -48,6 +48,7 @@ python sample/demo.py
 - [x] C++ formatter
 - [x] Set up pip-based install
 - [ ] C++ unit test
+- [ ] Make nice README.md with examples
 - [ ] Create Pypi package
 - [ ] Push publicly to Github
 
