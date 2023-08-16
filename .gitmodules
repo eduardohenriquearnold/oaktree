@@ -6,4 +6,4 @@
 	url = https://github.com/USCiLab/cereal.git
 [submodule "external/eigen"]
 	path = external/eigen
-	url = git@gitlab.com:libeigen/eigen.git
+	url = https://gitlab.com/libeigen/eigen.git
