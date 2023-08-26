@@ -2,35 +2,46 @@
 Render large point clouds efficiently using Octrees. The library is a C++ module with Python bindings for ease of use.
 
 ## Quick Demo
-Create an Octree from a Numpy array containing points xyz positions and RGB intensities.
+Create an Octree from a Numpy array containing points' xyz positions and RGB intensities.
 ```python
 import numpy as np
 from oaktree import Node
 
 # use random points, but could be any Numpy array with shape [N, 3]
 points = np.random.uniform(size=(100000, 3))
-points_rgb = np.random.uniform(size=(100000, 3))
+points_rgb = points.copy() / np.linalg.norm(points_rgb, axis=1, keepdims=True)
+points_rgb = (points_rgb + 1) / 2
 
-# create Node that allows efficient querying
+# create Octree node that allows efficient ray casting
 node = Node(max_points_per_node=1000, points=points, points_rgb=points_rgb)
 
 # camera parameters
 image_hw = (640, 480)
-K = np.array([[300, 0, 320], [0, 300, 240], [0, 0, 1]], dtype=np.float64)
-cam2world = np.eye(4)
+K = np.array([[300., 0., 320.],
+              [0., 300., 240.],
+              [0., 0., 1.]], dtype=np.float64)
+cam2world = np.array([[0.707, -0.408, -0.577, 2.0],
+                      [-0.707, -0.408, -0.577, 2.0], 
+                      [0.0, 0.816, -0.577, 2.0],
+                      [0.0, 0.0, 0.0, 1.0]], dtype=np.float64)
 
+# render
 rgbd = node.render(K=K, cam2world=cam2world, image_hw=image_hw)
-rgb = rgbd[:, :, :3]
-depth = rgbd[:, :, 3]
+rgb = rgbd[..., :3]
+depth = rgbd[..., 3]
 ```
+<p float="left">
+  <img src="examples/box_rgb.jpg" width="48%" />
+  <img src="examples/box_depth.png" width="48%" />
+</p>
 
-For more comprehensive examples, including real datasets, check the `examples` folder.
-Note: examples require extra dependencies including `matplotlib, PIL`.
+You can run this box example and a real dataset ([Wurzburg Lecture Hall](http://kos.informatik.uni-osnabrueck.de/3Dscans/)) example with
 ```bash
 cd examples
 python box.py
 python wurzburg.py
 ```
+Note: examples require extra dependencies including `matplotlib, PIL, pandas`.
 
 ## Installation
 
@@ -40,6 +51,9 @@ pip install oaktree
 ```
 
 ### Build from source
+Build dependencies:
+- CXX compiler compatible with C++17
+
 ```bash
 git clone --recursive https://github.com/eduardohenriquearnold/oaktree.git
 cd oaktree
@@ -59,9 +73,15 @@ ctest
 
 
 ## TODO
-- [ ] Make nice README.md with examples
-- [ ] Create Pypi package
+- [x] Make nice README.md with examples
+- [ ] Github actions that build, test and deploy to Pypi
 - [ ] Push publicly to Github
 
-## Sample data
-[Sample data](http://kos.informatik.uni-osnabrueck.de/3Dscans/)
+
+## Building with Manylinux
+```bash
+cd ~
+docker run -it --rm -v $(pwd)/octree:/octree quay.io/pypa/manylinux_2_28_x86_64
+/opt/python/cp39-cp39/bin/pip wheel /octree/ -w mywheels/
+auditwheel repair mywheels/oaktree-0.0.1-cp3* -w output/
+```
