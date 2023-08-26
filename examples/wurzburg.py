@@ -10,6 +10,7 @@ from oaktree import Node
 
 from utils import look_at
 
+
 def load_wurzburg_lecture_hall():
     path = Path("data/lecturehall/lecturehall1.pose1.object1.label.csv")
     URL = "http://kos.informatik.uni-osnabrueck.de/3Dscans/lecturehall.tar.xz"
@@ -24,7 +25,7 @@ def load_wurzburg_lecture_hall():
 
         # extract file
         print("Extracting files")
-        with tarfile.open("data/lecturehall.tar.xz", 'r:xz') as tar:
+        with tarfile.open("data/lecturehall.tar.xz", "r:xz") as tar:
             tar.extractall("data")
         print("Extraction completed")
 
@@ -34,8 +35,9 @@ def load_wurzburg_lecture_hall():
     pcl /= 100
     return pcl
 
+
 def get_camera_poses_circle(center: tuple[float, float, float], radius: float, n: int):
-    """Yields n camera poses around a circle with specified center and radius. 
+    """Yields n camera poses around a circle with specified center and radius.
     Cameras focus on central point.
     """
     center = np.array(center).reshape(-1)
@@ -47,6 +49,7 @@ def get_camera_poses_circle(center: tuple[float, float, float], radius: float, n
         eye = np.array([x, y, center[2]])
         pose = look_at(eye, center)
         yield pose
+
 
 def main():
     octree_path = Path("data/lecturehall.bin")
@@ -78,11 +81,13 @@ def main():
     K = np.array([[500, 0, 270], [0, 500, 360], [0, 0, 1]])
 
     # render depth maps for camera in a circle
-    for i, pose in enumerate(get_camera_poses_circle(center=np.zeros(3), radius=0.2, n=10)):
+    for i, pose in enumerate(
+        get_camera_poses_circle(center=np.zeros(3), radius=0.2, n=10)
+    ):
         rendered = node.render(K=K, cam2world=pose, image_hw=image_hw, pixel_dilation=3)
         depth = rendered[..., 3]
         normalised_depth = (depth - depth.min()) / (depth.max() - depth.min())
-        normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth)*255))
+        normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth) * 255))
         filename = f"wurzburg{i:03}.png"
         normalised_depth.save(filename)
         print(f"Rendered {filename}")

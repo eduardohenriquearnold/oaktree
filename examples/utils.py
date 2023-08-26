@@ -1,10 +1,11 @@
 import numpy as np
 
+
 def look_at(eye, center, up=None):
     if up is None:
-        up = np.array([0., 0., 1.])
+        up = np.array([0.0, 0.0, 1.0])
 
-    z = (center - eye)
+    z = center - eye
     z /= np.linalg.norm(z)
     x = np.cross(up, z)
     x /= np.linalg.norm(x)

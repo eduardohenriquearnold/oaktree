@@ -32,5 +32,5 @@ rgb = Image.fromarray(np.uint8(rgb * 255))
 rgb.save("box_rgb.jpg")
 
 normalised_depth = (depth - depth.min()) / (depth.max() - depth.min())
-normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth)*255))
+normalised_depth = Image.fromarray(np.uint8(cm.turbo(normalised_depth) * 255))
 normalised_depth.save("box_depth.png")
