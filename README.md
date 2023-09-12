@@ -35,13 +35,19 @@ depth = rgbd[..., 3]
   <img src="examples/box_depth.png" width="48%" />
 </p>
 
-You can run this box example and a real dataset ([Wurzburg Lecture Hall](http://kos.informatik.uni-osnabrueck.de/3Dscans/)) example with
+You can run this and other examples with real datasets with
 ```bash
 cd examples
 python box.py
 python wurzburg.py
 ```
 Note: examples require extra dependencies including `matplotlib, PIL, pandas`.
+
+[Wurzburg Lecture Hall demo](http://kos.informatik.uni-osnabrueck.de/2Dscans/) output depth maps:
+<p float="left">
+  <img src="examples/wurzburg004.png" width="48%" />
+  <img src="examples/wurzburg005.png" width="48%" />
+</p>
 
 ## Installation
 
