@@ -1,0 +1,45 @@
+name: Build, test and publish
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  linux-build:
+    name: Linux Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [ manylinux2014_x86_64 ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Build the Linux wheels
+        run: |
+          # Build wheels for versions 3.9 to 3.12
+          for PYVER in 39 310 311 312; do
+            sudo docker run --rm -v `pwd`:/oaktree quay.io/pypa/${{ matrix.platform }} /opt/python/cp${PYVER}-cp${PYVER}/bin/pip wheel /oaktree -w /oaktree/wheels/
+          done
+
+          # Fix wheels (package dependencies)
+          sudo docker run --rm -v `pwd`:/oaktree quay.io/pypa/${{ matrix.platform }} /bin/bash -c "for wheel in /oaktree/wheels/*.whl; do auditwheel repair \${wheel} -w /oaktree/wheelhouse/; done"
+
+          # cleanup for custom runner
+          sudo chown -R $(whoami):$(whoami) .
+      - name: Run tests
+        run: |
+          for TESTBIN in ./build/*/cpp_test; do
+            "$TESTBIN"
+          done;
+      - name: Archive wheels
+        uses: actions/upload-artifact@v3
+        with:
+          # we strip the version number from the artifact name
+          name: oaktree-${{ matrix.platform }}
+          path: wheelhouse/oaktree-*.whl
