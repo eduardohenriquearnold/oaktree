@@ -40,6 +40,26 @@ jobs:
       - name: Archive wheels
         uses: actions/upload-artifact@v3
         with:
-          # we strip the version number from the artifact name
           name: oaktree-${{ matrix.platform }}
-          path: wheelhouse/oaktree-*.whl
+          path: wheelhouse/*.whl
+
+  pypi-publish:
+    name: Publish wheels to PyPI
+    needs: [ linux-build ]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyoaktree
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
+    # publish the wheels to pypi only when a new tag is pushed
+    # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts/
+      - name: Move wheels
+        run: mkdir ./dist && mv ./artifacts/**/*.whl ./dist/
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@release/v1

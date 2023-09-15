@@ -51,9 +51,9 @@ Note: examples require extra dependencies including `matplotlib, PIL, pandas`.
 
 ## Installation
 
-### Pypi
+### Pypi (linux only)
 ```bash
-pip install oaktree
+pip install pyoaktree
 ```
 
 ### Build from source
@@ -75,19 +75,4 @@ cmake --build .
 ctest
 # or, to see results of individual tests
 ./cpp_test
-```
-
-
-## TODO
-- [x] Make nice README.md with examples
-- [ ] Github actions that build, test and deploy to Pypi
-- [ ] Push publicly to Github
-
-
-## Building with Manylinux
-```bash
-cd ~
-docker run -it --rm -v $(pwd)/octree:/octree quay.io/pypa/manylinux_2_28_x86_64
-/opt/python/cp39-cp39/bin/pip wheel /octree/ -w mywheels/
-auditwheel repair mywheels/oaktree-0.0.1-cp3* -w output/
 ```

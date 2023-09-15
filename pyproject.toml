@@ -3,8 +3,8 @@ requires = ["scikit-build-core >=0.4.3"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "oaktree"
-version = "0.0.1"
+name = "pyoaktree"
+version = "0.0.2"
 description = "Render large point clouds fast using Octrees in Python"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -12,7 +12,9 @@ authors = [
     { name = "Eduardo Arnold", email = "4097245+eduardohenriquearnold@users.noreply.github.com" },
 ]
 classifiers = [
-    "License :: MIT",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics :: 3D Rendering"
 ]
 
 [project.urls]
@@ -27,3 +29,7 @@ build-dir = "build/{wheel_tag}"
 
 # Build stable ABI wheels for CPython 3.12+
 wheel.py-api = "cp312"
+
+# Add oaktree __init__ 
+# necessary because project name is different from import name
+wheel.packages = ["src/oaktree"]
