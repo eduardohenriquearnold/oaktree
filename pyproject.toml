@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyoaktree"
-version = "0.0.2"
+version = "0.0.3"
 description = "Render large point clouds fast using Octrees in Python"
 readme = "README.md"
 requires-python = ">=3.8"
