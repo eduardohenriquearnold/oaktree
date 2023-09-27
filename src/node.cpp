@@ -5,8 +5,8 @@ void Node::update_vertices()
     if (points.size() <= 1)
         return;
 
-    double3 min_vert = points[0];
-    double3 max_vert = points[0];
+    double3 min_vert = points.front();
+    double3 max_vert = points.front();
     for (const double3& point : points)
     {
         min_vert = min_vert.cwiseMin(point);
@@ -36,17 +36,19 @@ void Node::split(unsigned int max_points_per_node)
 
     // Distribute points into children
     double3 node_center = 0.5 * (vert0 + vert1);
-    for (size_t idx = 0; idx < points.size(); idx++)
+    auto point_it = points.begin();
+    auto point_rgb_it = points_rgb.begin();
+    while(point_it != points.end())
     {
-        double3 point = points[idx] - node_center;
+        double3 point = *point_it - node_center;
         int children_id = (point.x() > 0 ? 1 : 0) + (point.y() > 0 ? 1 : 0) * 2 + (point.z() > 0 ? 1 : 0) * 4;
-        children[children_id].points.push_back(points[idx]);
+        children[children_id].points.splice(children[children_id].points.end(), points, point_it++);
 
-        if (!points_rgb.empty())
-            children[children_id].points_rgb.push_back(points_rgb[idx]);
+        if (point_rgb_it != points_rgb.end())
+            children[children_id].points_rgb.splice(children[children_id].points_rgb.end(), points_rgb, point_rgb_it++);
     }
-    points.clear();
-    points_rgb.clear();
+    if (!points.empty() || !points_rgb.empty())
+        throw std::range_error("Expected points of source node to be empty after splitting!"); 
 
     // Prune children without points
     children.erase(std::remove_if(children.begin(), children.end(), [](Node& child) {return child.points.empty();}), children.end());
@@ -57,7 +59,7 @@ void Node::split(unsigned int max_points_per_node)
         child.split(max_points_per_node);
 }
 
-Node::Node(unsigned int max_points_per_node, const doubleX3& given_points, const doubleX3& given_points_rgb)
+Node::Node(unsigned int max_points_per_node, const doubleX3& given_points, const floatX3& given_points_rgb)
 {
     if (given_points_rgb.rows() && (given_points.rows() != given_points_rgb.rows()))
         throw std::range_error("Expected points_rgb to be empty or match points size");
@@ -66,7 +68,7 @@ Node::Node(unsigned int max_points_per_node, const doubleX3& given_points, const
         points.push_back(double3(point.transpose()));
 
     for (auto point_rgb : given_points_rgb.rowwise())
-        points_rgb.push_back(double3(point_rgb.transpose()));
+        points_rgb.push_back(float3(point_rgb.transpose()));
 
     update_vertices();
     split(max_points_per_node);
@@ -84,7 +86,6 @@ void Node::save(std::filesystem::path path)
     std::ofstream output_stream(path, std::ios::binary);
     cereal::BinaryOutputArchive archive(output_stream);
     archive(*this);
-
 }
 
 // Return size properties of full as a 3 int tuple containing (total #nodes, total #levels, total #points)
@@ -175,9 +176,9 @@ double Node::ray_intersection(const double3& origin, const double3& dir) const
 // Cast ray at Octree, finds closest point (along ray direction) that projects to pixel
 // Returns pair:
 // - double t: distance to point, along the RAY. -1 if no intersection
-// - double3 point_rgb: rgb of selected point. (0, 0, 0) if no intersection
+// - float3 point_rgb: rgb of selected point. (0, 0, 0) if no intersection
 // Assumes dir (direction) has unit length
-std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const
+std::pair<double, float3> Node::ray_cast(const double3& origin, const double3& dir, const double& radius_pixel) const
 {
     // Priority queue contains octree nodes to visit next (ordered ascending from ray intersection distance)
     using queue_type = std::pair<double, const Node*>;
@@ -185,7 +186,8 @@ std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& 
     node_queue.push(std::make_pair(0, this));
 
     double shortest_ray_distance = 1e10;
-    size_t best_idx = -1;
+    float3 rgb = float3::Zero();
+    bool found = false;
 
     while (!node_queue.empty())
     {
@@ -193,25 +195,24 @@ std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& 
         node_queue.pop();
 
         // Check if points fall within cone, return closest one along ray
-        for (size_t idx = 0; idx < current->points.size(); idx++)
+        auto point_it = current->points.begin();
+        auto point_rgb_it = current->points_rgb.begin();
+        for(;point_it != current->points.end(); point_it++)
         {
-            double3 point = current->points[idx] - origin;
+            double3 point = *point_it - origin;
             double distance_along_ray = point.dot(dir);
             double radius_point = (point - distance_along_ray * dir).norm();
             double radius_cone = radius_pixel * distance_along_ray;
             if (radius_point <= radius_cone && distance_along_ray < shortest_ray_distance)
             {
+                found=true;
                 shortest_ray_distance = distance_along_ray;
-                best_idx = idx;
+                if (point_rgb_it != current->points_rgb.end())
+                    rgb = *point_rgb_it++;
             }
         }
-        if (best_idx != -1)
-        {
-            double3 rgb = double3::Zero();
-            if (!current->points_rgb.empty())
-                rgb = current->points_rgb[best_idx];
+        if (found)
             return std::make_pair(shortest_ray_distance, rgb);
-        }
 
         // Add children which intersect rays to the queue (ordered by who intersects first)
         for (const Node& child : current->children)
@@ -222,11 +223,11 @@ std::pair<double, double3> Node::ray_cast(const double3& origin, const double3& 
         }
     }
 
-    return std::make_pair(-1, double3::Zero());
+    return std::make_pair(-1, float3::Zero());
 }
 
 
-ImageTensor Node::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation)
+ImageTensor Node::render(const double3x3& K, const double4x4& cam2world, std::pair<int, int> image_hw, uint pixel_dilation) const
 {
     // Create data storage for image (stored as 4 channel: r, g, b, depth) with shape (H, W, 4), row-major
     ImageTensor image(image_hw.first, image_hw.second, 4);

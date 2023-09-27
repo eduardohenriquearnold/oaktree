@@ -51,7 +51,7 @@ void test_create_save_load()
 
     // create octree with random points
     doubleX3 given_points = doubleX3::Random(npts, 3) * 100.;
-    doubleX3 given_points_rgb = (doubleX3::Random(npts, 3).array() + 1.) / 2.;
+    floatX3 given_points_rgb = (floatX3::Random(npts, 3).array() + 1.) / 2.;
     Node node(1000, given_points, given_points_rgb);
 
     // assert node created with success
@@ -91,6 +91,7 @@ void test_render_plane()
 
     // create node
     Node node(1000, given_points);
+    node.test();
 
     // render
     auto rendered = node.render(K, pose, image_hw, 4);
